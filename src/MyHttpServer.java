@@ -18,8 +18,7 @@ public class MyHttpServer implements Runnable {
         try {
             ServerSocket serverSocket = new ServerSocket(8080);
             System.out.println("Server started. Listening on port: 8080");
-            System.out.println(serverSocket.getInetAddress());
-            System.out.println(serverSocket.getLocalPort());
+
             MyHttpServer myHttpServer = new MyHttpServer(serverSocket.accept());
             System.out.println("Incoming connection, InetAddress: " + myHttpServer.socket.getInetAddress());
             System.out.println("Incoming connection, port: " + myHttpServer.socket.getPort());
@@ -41,9 +40,10 @@ public class MyHttpServer implements Runnable {
             try {
                 BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
                 String inputLine = in.readLine();
+                String[] request = inputLine.split(" ");
+                System.out.println();
                 System.out.println(inputLine);
 
-                String[] request = inputLine.split(" ");
                 String pathname = "";
                 if (request[1].equals("/")) {
                     pathname = "index.html";
@@ -67,9 +67,32 @@ public class MyHttpServer implements Runnable {
                 dataOut.write(fileData, 0, (int) file.length());
                 dataOut.flush();
 
-            } catch (IOException e) {
+
+
+
+            } catch (NullPointerException| IOException e) {
                 System.out.println("This error occured:\n");
                 e.printStackTrace();
+                try {
+                    PrintWriter out = new PrintWriter(socket.getOutputStream());
+                    out.println("HTTP/1.1 404 FILE NOT FOUND");
+                    out.println("PRIIT Server 1.0!");
+                    out.println("Date: " + new Date());
+                    File file = new File("test1/404.html");
+                    out.println("Content-length: " + (int) file.length());
+                    out.println("");
+                    out.flush();
+
+
+                    BufferedOutputStream dataOut = new BufferedOutputStream(socket.getOutputStream());
+                    byte[] fileData = readFileData(file);
+                    dataOut.write(fileData, 0, (int) file.length());
+                    dataOut.flush();
+
+
+                } catch (IOException ex) {
+                    ex.printStackTrace();
+                }
             }
         }
 
