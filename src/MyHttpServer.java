@@ -9,7 +9,6 @@ public class MyHttpServer implements Runnable {
 
     public Socket socket;
 
-
     public MyHttpServer(Socket c) {
         this.socket = c;
     }
