@@ -1,7 +1,6 @@
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.sql.SQLOutput;
 import java.util.Date;
 
 public class MyHttpServer implements Runnable {
@@ -17,6 +16,8 @@ public class MyHttpServer implements Runnable {
         try {
             ServerSocket serverSocket = new ServerSocket(8080);
             System.out.println("Server started. Listening on port: 8080");
+            System.out.println(serverSocket.getInetAddress());
+            System.out.println(serverSocket.getLocalPort());
             MyHttpServer myHttpServer = new MyHttpServer(serverSocket.accept());
             System.out.println("Incoming connection, InetAddress: " + myHttpServer.socket.getInetAddress());
             System.out.println("Incoming connection, port: " + myHttpServer.socket.getPort());
@@ -37,6 +38,7 @@ public class MyHttpServer implements Runnable {
         try {
             BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             String inputLine = in.readLine();
+            String[] request = inputLine.split(" ");
             System.out.println(inputLine);
             inputLine = in.readLine();
             System.out.println(inputLine);
@@ -69,10 +71,18 @@ public class MyHttpServer implements Runnable {
             inputLine = in.readLine();
             System.out.println(inputLine+"end");
 
-            PrintWriter out = new PrintWriter(socket.getOutputStream());
-            BufferedOutputStream dataOut = new BufferedOutputStream(socket.getOutputStream());
-            File file = new File("index.html");
+            String pathname = "";
+            if (request[1].equals("/")) {
+                pathname = "index.html";
+            } else {
+                pathname = request[1].replaceFirst("/","");
+            }
+            System.out.println(pathname);
+
+            File file = new File(pathname);
             byte[] fileData = readFileData(file);
+
+            PrintWriter out = new PrintWriter(socket.getOutputStream());
             out.println("HTTP/1.1 200 OK");
             out.println("PRIIT Server 1.0!");
             out.println("Date: " + new Date());
@@ -80,6 +90,8 @@ public class MyHttpServer implements Runnable {
             out.println("Content-length: " + (int)file.length());
             out.println("");
             out.flush();
+
+            BufferedOutputStream dataOut = new BufferedOutputStream(socket.getOutputStream());
             dataOut.write(fileData,0,(int)file.length());
             dataOut.flush();
 
@@ -103,8 +115,6 @@ public class MyHttpServer implements Runnable {
         {
             if (fileInputStream != null)
                 fileInputStream.close();
-//        } catch (IOException e) {
-//            e.printStackTrace();
         }
         return filedata;
     }
