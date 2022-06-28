@@ -20,24 +20,24 @@ public class MyHttpServer implements Runnable {
 
     public static void main(String[] args) {
 
-            try {
-                ServerSocket serverSocket = new ServerSocket(LOCALPORT);
-                System.out.println("Server started.\n" + serverSocket);
+        try {
+            ServerSocket serverSocket = new ServerSocket(LOCALPORT);
+            System.out.println("Server started.\n" + serverSocket);
 
-                while (serverListening) {
-                    try {
-                        MyHttpServer myHttpServer = new MyHttpServer(serverSocket.accept());
-                        System.out.println("Incoming connection.\n" + myHttpServer.socket);
-                        new Thread(myHttpServer).start();                        
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
+            while (serverListening) {
+                try {
+                    MyHttpServer myHttpServer = new MyHttpServer(serverSocket.accept());
+                    System.out.println("Incoming connection.\n" + myHttpServer.socket);
+                    new Thread(myHttpServer).start();
+                } catch (IOException e) {
+                    e.printStackTrace();
                 }
-
-            } catch (IOException e) {
-                e.printStackTrace();
-                serverListening = false;
             }
+
+        } catch (IOException e) {
+            e.printStackTrace();
+            serverListening = false;
+        }
     }
 
     @Override
@@ -47,34 +47,36 @@ public class MyHttpServer implements Runnable {
 
         while (connected) {
             try {
-                String httpRequest = recieveHttpRequest();
-                Request request = new Request(httpRequest.split(" "));
-                System.out.println();
-                System.out.println(httpRequest);
+                Request request = new Request(recieveHttpRequest().split(" "));
+                System.out.println(request.type + " " + request.path);
 
                 if (request.type.equals("GET")) {
-                    if (request.path.equals("/")) {
-                        request.path = "index.html";
-                    } else  {
-                        request.path = request.path.replaceFirst("/", "");
-                    }
-
-                    File file = new File(request.path);
-
-                    if (file.exists() || file.isDirectory()) {
-                        sendResponseHeader(request.httpVersion, SUCCESSFUL, file.length());
-                        sendResponseFile(file);
-                    } else {
-                        sendResponseHeader(request.httpVersion, NOTFOUND, fileNotFound.length());
-                        sendResponseFile(fileNotFound);
-                    }
+                    setPath(request);
+                    sendHttpResponse(request, new File(request.path));
                 }
             } catch (NullPointerException | IOException e) {
                 connected = false;
-                e.printStackTrace();
             }
         }
         System.out.println("Socket " + socket + " disconnected");
+    }
+
+    private void setPath(Request request) {
+        if (request.path.equals("/")) {
+            request.path = "index.html";
+        } else {
+            request.path = request.path.replaceFirst("/", "");
+        }
+    }
+
+    private void sendHttpResponse(Request request, File file) throws IOException {
+        if (file.exists()) {
+            sendResponseHeader(request.httpVersion, SUCCESSFUL, file.length());
+            sendResponseFile(file);
+        } else {
+            sendResponseHeader(request.httpVersion, NOTFOUND, fileNotFound.length());
+            sendResponseFile(fileNotFound);
+        }
     }
 
     private String recieveHttpRequest() throws IOException {
