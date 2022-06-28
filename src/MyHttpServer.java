@@ -33,7 +33,6 @@ public class MyHttpServer implements Runnable {
                     e.printStackTrace();
                 }
             }
-
         } catch (IOException e) {
             e.printStackTrace();
             serverListening = false;
@@ -81,8 +80,7 @@ public class MyHttpServer implements Runnable {
 
     private String recieveHttpRequest() throws IOException {
         BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-        String httpRequest = in.readLine();
-        return httpRequest;
+        return in.readLine();
     }
 
     private void sendResponseFile(File file) throws IOException {
@@ -115,7 +113,7 @@ public class MyHttpServer implements Runnable {
         return filedata;
     }
 
-    public static class Request {
+    protected static class Request {
         String type;
         String path;
         String httpVersion;
