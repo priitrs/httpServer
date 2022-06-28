@@ -47,27 +47,25 @@ public class MyHttpServer implements Runnable {
 
         while (connected) {
             try {
-                BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-                String inputLine = in.readLine();
-                String[] request = inputLine.split(" ");
+                String httpRequest = recieveHttpRequest();
+                Request request = new Request(httpRequest.split(" "));
                 System.out.println();
-                System.out.println(inputLine);
+                System.out.println(httpRequest);
 
-                if (request[0].equals("GET")) {
-                    String pathname = "";
-                    if (request[1].equals("/")) {
-                        pathname = "index.html";
+                if (request.type.equals("GET")) {
+                    if (request.path.equals("/")) {
+                        request.path = "index.html";
                     } else  {
-                        pathname = request[1].replaceFirst("/", "");
+                        request.path = request.path.replaceFirst("/", "");
                     }
 
-                    File file = new File(pathname);
+                    File file = new File(request.path);
 
                     if (file.exists() || file.isDirectory()) {
-                        sendResponseHeader(request, SUCCESSFUL, file.length());
+                        sendResponseHeader(request.httpVersion, SUCCESSFUL, file.length());
                         sendResponseFile(file);
                     } else {
-                        sendResponseHeader(request, NOTFOUND, fileNotFound.length());
+                        sendResponseHeader(request.httpVersion, NOTFOUND, fileNotFound.length());
                         sendResponseFile(fileNotFound);
                     }
                 }
@@ -79,16 +77,21 @@ public class MyHttpServer implements Runnable {
         System.out.println("Socket " + socket + " disconnected");
     }
 
+    private String recieveHttpRequest() throws IOException {
+        BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+        String httpRequest = in.readLine();
+        return httpRequest;
+    }
+
     private void sendResponseFile(File file) throws IOException {
         BufferedOutputStream dataOut = new BufferedOutputStream(socket.getOutputStream());
         dataOut.write(readFileData(file), 0, (int) file.length());
         dataOut.flush();
     }
 
-    private void sendResponseHeader(String[] request, String responseMessage, long filelength) throws IOException {
+    private void sendResponseHeader(String httpVersion, String responseMessage, long filelength) throws IOException {
         PrintWriter out = new PrintWriter(socket.getOutputStream());
-
-        out.println(request[2] + responseMessage);
+        out.println(httpVersion + responseMessage);
         out.println("PRIIT Server 1.0!");
         out.println("Date: " + new Date());
 //                out.println("Content-type: " + "text/html");
@@ -97,18 +100,28 @@ public class MyHttpServer implements Runnable {
         out.flush();
     }
 
-
     private byte[] readFileData(File file) throws IOException {
         FileInputStream fileInputStream = null;
         byte[] filedata = new byte[(int) file.length()];
         try {
             fileInputStream = new FileInputStream(file);
             fileInputStream.read(filedata);
-
         } finally {
             if (fileInputStream != null)
                 fileInputStream.close();
         }
         return filedata;
+    }
+
+    public static class Request {
+        String type;
+        String path;
+        String httpVersion;
+
+        public Request(String[] request) {
+            this.type = request[0];
+            this.path = request[1];
+            this.httpVersion = request[2];
+        }
     }
 }
