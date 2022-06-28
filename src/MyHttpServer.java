@@ -6,12 +6,10 @@ import java.util.Date;
 public class MyHttpServer implements Runnable {
 
     public Socket socket;
-
     private static final int LOCALPORT = 8080;
     private static final String SUCCESSFUL = " 200 OK";
     private static final String NOTFOUND = " 404 FILE NOT FOUND";
     private static boolean serverListening = true;
-
     File fileNotFound = new File("test1/404.html");
 
     public MyHttpServer(Socket c) {
@@ -37,6 +35,7 @@ public class MyHttpServer implements Runnable {
             e.printStackTrace();
             serverListening = false;
         }
+
     }
 
     @Override
@@ -46,7 +45,7 @@ public class MyHttpServer implements Runnable {
 
         while (connected) {
             try {
-                Request request = new Request(recieveHttpRequest().split(" "));
+                Request request = new Request(recieveHttpRequest());
                 System.out.println(request.type + " " + request.path);
 
                 if (request.type.equals("GET")) {
@@ -118,10 +117,11 @@ public class MyHttpServer implements Runnable {
         String path;
         String httpVersion;
 
-        public Request(String[] request) {
-            this.type = request[0];
-            this.path = request[1];
-            this.httpVersion = request[2];
+        public Request(String request) {
+            String[] split = request.split(" ");
+            this.type = split[0];
+            this.path = split[1];
+            this.httpVersion = split[2];
         }
     }
 }
