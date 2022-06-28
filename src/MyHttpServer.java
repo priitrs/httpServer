@@ -10,6 +10,12 @@ public class MyHttpServer implements Runnable {
 
     public Socket socket;
 
+    private static final int LOCALPORT = 8080;
+    private static final String SUCCESSFUL = " 200 OK";
+    private static final String NOTFOUND = " 404 FILE NOT FOUND";
+
+    File fileNotFound = new File("test1/404.html");
+
     public MyHttpServer(Socket c) {
         this.socket = c;
     }
@@ -17,7 +23,7 @@ public class MyHttpServer implements Runnable {
     public static void main(String[] args) {
 
         try {
-            ServerSocket serverSocket = new ServerSocket(8080);
+            ServerSocket serverSocket = new ServerSocket(LOCALPORT);
             System.out.println("Server started.\n" + serverSocket);
 
             MyHttpServer myHttpServer = new MyHttpServer(serverSocket.accept());
@@ -26,6 +32,7 @@ public class MyHttpServer implements Runnable {
 
             Thread thread = new Thread(myHttpServer);
             thread.start();
+
 
         } catch (IOException e) {
             System.out.println("This error occured:\n");
@@ -37,74 +44,81 @@ public class MyHttpServer implements Runnable {
     @Override
     public void run() {
         System.out.println("Thread run() started");
+        BufferedReader in = null;
+        boolean status = true;
 
-        while (socket.isConnected()) {
-
+        while (status) {
             try {
-//
-                BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+                in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
                 String inputLine = in.readLine();
                 String[] request = inputLine.split(" ");
                 System.out.println();
                 System.out.println(inputLine);
 
+                if (request[0].equals("GET")) {
+                    String pathname = "";
+                    if (request[1].equals("/")) {
+                        pathname = "index.html";
+                    } else if (!request[1].isEmpty()) {
+                        pathname = request[1].replaceFirst("/", "");
+                    } else {
+                        throw new NullPointerException("Connection is closed");
 
-                String pathname = "";
-                if (request[1].equals("/")) {
-                    pathname = "index.html";
-                } else if (!request[1].isEmpty()) {
-                    pathname = request[1].replaceFirst("/", "");
-                } else {
-                    throw new IOException ("Connection is closed");
+                    }
 
+                    File file = new File(pathname);
+
+                    if (file.exists()) {
+                        sendResponseHeader(request, SUCCESSFUL, file.length());
+                        sendResponseFile(file);
+                    } else {
+                        sendResponseHeader(request, NOTFOUND, fileNotFound.length());
+                        sendResponseFile(fileNotFound);
+//
+//                        PrintWriter out = new PrintWriter(socket.getOutputStream());
+//                        out.println(request[2] + " 404 FILE NOT FOUND");
+//                        out.println("PRIIT Server 1.0!");
+//                        out.println("Date: " + new Date());
+//
+//                        out.println("Content-length: " + (int) fileNotFound.length());
+//                        out.println("");
+//                        out.flush();
+//
+//
+//                        BufferedOutputStream dataOut = new BufferedOutputStream(socket.getOutputStream());
+//                        byte[] fileData = readFileData(fileNotFound);
+//                        dataOut.write(fileData, 0, (int) fileNotFound.length());
+//                        dataOut.flush();
+                    }
                 }
-
-                File file = new File(pathname);
-
-                if (file.exists()) {
-                    byte[] fileData = readFileData(file);
-
-                    PrintWriter out = new PrintWriter(socket.getOutputStream());
-                    out.println(request[2] + " 200 OK");
-                    out.println("PRIIT Server 1.0!");
-                    out.println("Date: " + new Date());
-//                out.println("Content-type: " + "text/html");
-                    out.println("Content-length: " + (int) file.length());
-                    out.println("");
-                    out.flush();
-
-                    BufferedOutputStream dataOut = new BufferedOutputStream(socket.getOutputStream());
-                    dataOut.write(fileData, 0, (int) file.length());
-                    dataOut.flush();
-                } else {
-                    PrintWriter out = new PrintWriter(socket.getOutputStream());
-                    out.println("HTTP/1.1 404 FILE NOT FOUND");
-                    out.println("PRIIT Server 1.0!");
-                    out.println("Date: " + new Date());
-                    File fileNotFound = new File("test1/404.html");
-
-                    out.println("Content-length: " + (int) fileNotFound.length());
-                    out.println("");
-                    out.flush();
-
-
-                    BufferedOutputStream dataOut = new BufferedOutputStream(socket.getOutputStream());
-                    byte[] fileData = readFileData(fileNotFound);
-                    dataOut.write(fileData, 0, (int) fileNotFound.length());
-                    dataOut.flush();
-                }
-
 
 
             } catch (NullPointerException | IOException e) {
-                System.out.println("This error occured:\n");
+                status = false;
                 e.printStackTrace();
             }
-
         }
         System.out.println("Socket disconnected");
-
     }
+
+    private void sendResponseFile(File file) throws IOException {
+        BufferedOutputStream dataOut = new BufferedOutputStream(socket.getOutputStream());
+        dataOut.write(readFileData(file), 0, (int) file.length());
+        dataOut.flush();
+    }
+
+    private void sendResponseHeader(String[] request, String response, long filelength) throws IOException {
+        PrintWriter out = new PrintWriter(socket.getOutputStream());
+
+        out.println(request[2] + response);
+        out.println("PRIIT Server 1.0!");
+        out.println("Date: " + new Date());
+//                out.println("Content-type: " + "text/html");
+        out.println("Content-length: " + filelength);
+        out.println("");
+        out.flush();
+    }
+
 
     private byte[] readFileData(File file) throws IOException {
         FileInputStream fileInputStream = null;
