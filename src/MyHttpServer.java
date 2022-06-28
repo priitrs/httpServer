@@ -1,9 +1,6 @@
-import org.w3c.dom.ls.LSOutput;
-
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.net.SocketException;
 import java.util.Date;
 
 public class MyHttpServer implements Runnable {
@@ -13,6 +10,7 @@ public class MyHttpServer implements Runnable {
     private static final int LOCALPORT = 8080;
     private static final String SUCCESSFUL = " 200 OK";
     private static final String NOTFOUND = " 404 FILE NOT FOUND";
+    private static boolean serverListening = true;
 
     File fileNotFound = new File("test1/404.html");
 
@@ -22,34 +20,34 @@ public class MyHttpServer implements Runnable {
 
     public static void main(String[] args) {
 
-        try {
-            ServerSocket serverSocket = new ServerSocket(LOCALPORT);
-            System.out.println("Server started.\n" + serverSocket);
+            try {
+                ServerSocket serverSocket = new ServerSocket(LOCALPORT);
+                System.out.println("Server started.\n" + serverSocket);
 
-            MyHttpServer myHttpServer = new MyHttpServer(serverSocket.accept());
-            System.out.println("Incoming connection.\n" + myHttpServer.socket);
-            serverSocket.close();
+                while (serverListening) {
+                    try {
+                        MyHttpServer myHttpServer = new MyHttpServer(serverSocket.accept());
+                        System.out.println("Incoming connection.\n" + myHttpServer.socket);
+                        new Thread(myHttpServer).start();                        
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
 
-            Thread thread = new Thread(myHttpServer);
-            thread.start();
-
-
-        } catch (IOException e) {
-            System.out.println("This error occured:\n");
-            e.printStackTrace();
-        }
-
+            } catch (IOException e) {
+                e.printStackTrace();
+                serverListening = false;
+            }
     }
 
     @Override
     public void run() {
         System.out.println("Thread run() started");
-        BufferedReader in = null;
-        boolean status = true;
+        boolean connected = true;
 
-        while (status) {
+        while (connected) {
             try {
-                in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+                BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
                 String inputLine = in.readLine();
                 String[] request = inputLine.split(" ");
                 System.out.println();
@@ -59,46 +57,26 @@ public class MyHttpServer implements Runnable {
                     String pathname = "";
                     if (request[1].equals("/")) {
                         pathname = "index.html";
-                    } else if (!request[1].isEmpty()) {
+                    } else  {
                         pathname = request[1].replaceFirst("/", "");
-                    } else {
-                        throw new NullPointerException("Connection is closed");
-
                     }
 
                     File file = new File(pathname);
 
-                    if (file.exists()) {
+                    if (file.exists() || file.isDirectory()) {
                         sendResponseHeader(request, SUCCESSFUL, file.length());
                         sendResponseFile(file);
                     } else {
                         sendResponseHeader(request, NOTFOUND, fileNotFound.length());
                         sendResponseFile(fileNotFound);
-//
-//                        PrintWriter out = new PrintWriter(socket.getOutputStream());
-//                        out.println(request[2] + " 404 FILE NOT FOUND");
-//                        out.println("PRIIT Server 1.0!");
-//                        out.println("Date: " + new Date());
-//
-//                        out.println("Content-length: " + (int) fileNotFound.length());
-//                        out.println("");
-//                        out.flush();
-//
-//
-//                        BufferedOutputStream dataOut = new BufferedOutputStream(socket.getOutputStream());
-//                        byte[] fileData = readFileData(fileNotFound);
-//                        dataOut.write(fileData, 0, (int) fileNotFound.length());
-//                        dataOut.flush();
                     }
                 }
-
-
             } catch (NullPointerException | IOException e) {
-                status = false;
+                connected = false;
                 e.printStackTrace();
             }
         }
-        System.out.println("Socket disconnected");
+        System.out.println("Socket " + socket + " disconnected");
     }
 
     private void sendResponseFile(File file) throws IOException {
@@ -107,10 +85,10 @@ public class MyHttpServer implements Runnable {
         dataOut.flush();
     }
 
-    private void sendResponseHeader(String[] request, String response, long filelength) throws IOException {
+    private void sendResponseHeader(String[] request, String responseMessage, long filelength) throws IOException {
         PrintWriter out = new PrintWriter(socket.getOutputStream());
 
-        out.println(request[2] + response);
+        out.println(request[2] + responseMessage);
         out.println("PRIIT Server 1.0!");
         out.println("Date: " + new Date());
 //                out.println("Content-type: " + "text/html");
