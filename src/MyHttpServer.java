@@ -1,6 +1,9 @@
+import idNumber.EEIdNumber;
+
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import java.util.HashMap;
 
@@ -51,6 +54,10 @@ public class MyHttpServer implements Runnable {
 
                 if (request.type.equals("GET")) {
                     setPath(request);
+                    if (request.path.equals("testing.html")) {
+                        EEIdNumber eeIdNumber = new EEIdNumber(request.parameters.get("id"));
+                        writeToFile(request, eeIdNumber);
+                    }
                     sendHttpResponse(request, new File(request.path));
                 }
             } catch (NullPointerException | IOException e) {
@@ -66,6 +73,30 @@ public class MyHttpServer implements Runnable {
         } else {
             request.path = request.path.replaceFirst("/", "");
         }
+    }
+
+    private void writeToFile(Request request, EEIdNumber eeIdNumber) throws IOException {
+        FileOutputStream out = new FileOutputStream(request.path);
+
+        String beginning = "<!DOCTYPE html>\n" +
+                "<html lang=\"en\">\n" +
+                "<head>\n" +
+                "    <meta charset=\"UTF-8\">\n" +
+                "    <title>Testing</title>\n" +
+                "</head>\n" +
+                "<body>\n" +
+                "<div>\n";
+        out.write(beginning.getBytes(StandardCharsets.UTF_8));
+        out.write(("Isikukood " + request.parameters.get("id")+ " on " + eeIdNumber.validateIdNumber() + "<br>").getBytes(StandardCharsets.UTF_8));
+        out.write(("Sünniaeg " + eeIdNumber.birthDate + "<br>").getBytes(StandardCharsets.UTF_8));
+        out.write(("Nimi " + request.parameters.get("name")).getBytes(StandardCharsets.UTF_8));
+        String ending = "\n" +
+                "</div>\n" +
+                "</body>\n" +
+                "</html>";
+        out.write(ending.getBytes(StandardCharsets.UTF_8));
+        out.close();
+
     }
 
     private void sendHttpResponse(Request request, File file) throws IOException {
@@ -120,20 +151,24 @@ public class MyHttpServer implements Runnable {
         HashMap<String, String> parameters = new HashMap<>();
 
         public Request(String request) {
-            String[] split = request.split(" ");
-            this.type = split[0];
-            if (split[1].contains("?")) {
-                String[] splitPath = split[1].split("\\?");
+            String[] splitRequest = request.split(" ");
+            this.type = splitRequest[0];
+            if (splitRequest[1].contains("?")) {
+                String[] splitPath = splitRequest[1].split("\\?");
                 this.path = splitPath[0];
-                String[] queryParams = splitPath[1].split("&");
-                for (String queryParam : queryParams) {
-                    String[] queryParamSplit = queryParam.split("=");
-                    this.parameters.put(queryParamSplit[0], queryParamSplit[1]);
-                }
+                getParameters(splitPath[1]);
             } else {
-                this.path = split[1];
+                this.path = splitRequest[1];
             }
-            this.httpVersion = split[2];
+            this.httpVersion = splitRequest[2];
+        }
+
+        private void getParameters(String splitPath) {
+            String[] queryParams = splitPath.split("&");
+            for (String queryParam : queryParams) {
+                String[] queryParamSplit = queryParam.split("=");
+                this.parameters.put(queryParamSplit[0], queryParamSplit[1]);
+            }
         }
     }
 }
