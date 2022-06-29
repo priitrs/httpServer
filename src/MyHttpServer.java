@@ -2,6 +2,7 @@ import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.Date;
+import java.util.HashMap;
 
 public class MyHttpServer implements Runnable {
 
@@ -59,7 +60,7 @@ public class MyHttpServer implements Runnable {
         System.out.println("Socket " + socket + " disconnected");
     }
 
-    private void setPath(Request request) {
+    protected void setPath(Request request) {
         if (request.path.equals("/")) {
             request.path = "index.html";
         } else {
@@ -116,11 +117,22 @@ public class MyHttpServer implements Runnable {
         String type;
         String path;
         String httpVersion;
+        HashMap<String, String> parameters = new HashMap<>();
 
         public Request(String request) {
             String[] split = request.split(" ");
             this.type = split[0];
-            this.path = split[1];
+            if (split[1].contains("?")) {
+                String[] splitPath = split[1].split("\\?");
+                this.path = splitPath[0];
+                String[] queryParams = splitPath[1].split("&");
+                for (String queryParam : queryParams) {
+                    String[] queryParamSplit = queryParam.split("=");
+                    this.parameters.put(queryParamSplit[0], queryParamSplit[1]);
+                }
+            } else {
+                this.path = split[1];
+            }
             this.httpVersion = split[2];
         }
     }
