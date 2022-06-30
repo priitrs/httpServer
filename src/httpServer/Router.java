@@ -1,5 +1,7 @@
 package httpServer;
 
+import java.io.IOException;
+
 public class Router {
 
     Service service = new Service();
@@ -7,16 +9,21 @@ public class Router {
     public Router() {
     }
 
-    public String routing(MyHttpServer.Request request) {
+    public boolean routing(MyHttpServer.Request request) throws IOException {
         switch (request.path) {
             case "idcode":
-               return service.validateIdCode(request.parameters.get("id"));
+                if (request.parameters.containsKey("id")) {
+                    service.validateIdCode(request.parameters.get("id"));
+                    return true;
+                }
+                return false;
 
             case "salary":
-               return service.calculateSalary(request.parameters.get("grossSalary"));
+                service.calculateSalary(request.parameters.get("grossSalary"));
+                return true;
 
             default:
-                return "400";
+                return false;
         }
     }
 }

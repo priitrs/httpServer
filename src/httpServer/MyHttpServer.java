@@ -1,7 +1,5 @@
 package httpServer;
 
-import idNumber.EEIdNumber;
-
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -52,15 +50,10 @@ public class MyHttpServer implements Runnable {
             try {
                 Request request = new Request(recieveHttpRequest());
                 setPath(request);
-
                 if (request.type.equals("GET")) {
                     sendHttpResponse(request);
                 }
-//                if ((request.type.equals("POST"))) {
-//                    EEIdNumber eeIdNumber = new EEIdNumber(request.parameters.get("id"));
-//                    writeToFile(request, eeIdNumber);
-//                }
-            } catch (NullPointerException | IOException e) {
+            } catch (IOException e) {
                 connected = false;
             }
         }
@@ -79,48 +72,34 @@ public class MyHttpServer implements Runnable {
         }
     }
 
-    private void writeToFile(String routingResult) throws IOException {
-        FileOutputStream out = new FileOutputStream("testing.html");
-
-        String beginning = "<!DOCTYPE html>\n" +
-                "<html lang=\"en\">\n" +
-                "<head>\n" +
-                "    <meta charset=\"UTF-8\">\n" +
-                "    <title>Testing</title>\n" +
-                "</head>\n" +
-                "<body>\n" +
-                "<div>\n";
-        out.write(beginning.getBytes(StandardCharsets.UTF_8));
-        out.write(routingResult.getBytes(StandardCharsets.UTF_8));
-        String ending = "\n" +
-                "</div>\n" +
-                "</body>\n" +
-                "</html>";
-        out.write(ending.getBytes(StandardCharsets.UTF_8));
-        out.close();
-    }
-
     private void sendHttpResponse(Request request) throws IOException {
         if (request.path.contains(".")) {
-            File file = new File(request.path);
-            if (file.exists()) {
-                sendResponseHeader(request.httpVersion, SUCCESSFUL, file.length());
-                sendResponseFile(file);
-            }else{
-                sendResponseHeader(request.httpVersion, NOTFOUND, fileNotFound.length());
-                sendResponseFile(fileNotFound);
-            }
+            sendResponseFile(request);
         } else{
-            String routerResult = router.routing(request);
-            if (routerResult.equals("400")) {
-                sendResponseHeader(request.httpVersion, BADREQUEST, badRequest.length());
-                sendResponseFile(badRequest);
-            } else {
-                writeToFile(routerResult);
-                File file = new File("testing.html");
-                sendResponseHeader(request.httpVersion, SUCCESSFUL, file.length());
-                sendResponseFile(file);
-            }
+            sendRoutingResult(request);
+        }
+    }
+
+    private void sendResponseFile(Request request) throws IOException {
+        File file = new File(request.path);
+        if (file.exists()) {
+            sendResponseHeader(request.httpVersion, SUCCESSFUL, file.length());
+            sendResponseFile(file);
+        }else{
+            sendResponseHeader(request.httpVersion, NOTFOUND, fileNotFound.length());
+            sendResponseFile(fileNotFound);
+        }
+    }
+
+    private void sendRoutingResult(Request request) throws IOException {
+        boolean routingResult = router.routing(request);
+        if (!routingResult) {
+            sendResponseHeader(request.httpVersion, BADREQUEST, badRequest.length());
+            sendResponseFile(badRequest);
+        } else {
+            File file = new File("testing.html");
+            sendResponseHeader(request.httpVersion, SUCCESSFUL, file.length());
+            sendResponseFile(file);
         }
     }
 
