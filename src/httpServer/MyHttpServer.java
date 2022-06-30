@@ -3,7 +3,6 @@ package httpServer;
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import java.util.HashMap;
 
@@ -48,7 +47,7 @@ public class MyHttpServer implements Runnable {
 
         while (connected) {
             try {
-                Request request = new Request(recieveHttpRequest());
+                Request request = new Request(receiveHttpRequest());
                 setPath(request);
                 if (request.type.equals("GET")) {
                     sendHttpResponse(request);
@@ -60,7 +59,7 @@ public class MyHttpServer implements Runnable {
         System.out.println("Socket " + socket + " disconnected");
     }
 
-    private String recieveHttpRequest() throws IOException {
+    private String receiveHttpRequest() throws IOException {
         BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
         return in.readLine();
     }
@@ -74,33 +73,32 @@ public class MyHttpServer implements Runnable {
 
     private void sendHttpResponse(Request request) throws IOException {
         if (request.path.contains(".")) {
-            sendResponseFile(request);
+            sendFileResponse(request);
         } else{
-            sendRoutingResult(request);
+            sendRoutingResponse(request);
         }
     }
 
-    private void sendResponseFile(Request request) throws IOException {
+    private void sendFileResponse(Request request) throws IOException {
         File file = new File(request.path);
         if (file.exists()) {
-            sendResponseHeader(request.httpVersion, SUCCESSFUL, file.length());
-            sendResponseFile(file);
+            sendResponse(request, SUCCESSFUL, file);
         }else{
-            sendResponseHeader(request.httpVersion, NOTFOUND, fileNotFound.length());
-            sendResponseFile(fileNotFound);
+            sendResponse(request, NOTFOUND, fileNotFound);
         }
     }
 
-    private void sendRoutingResult(Request request) throws IOException {
-        boolean routingResult = router.routing(request);
-        if (!routingResult) {
-            sendResponseHeader(request.httpVersion, BADREQUEST, badRequest.length());
-            sendResponseFile(badRequest);
+    private void sendRoutingResponse(Request request) throws IOException {
+        if (!router.routingExists(request)) {
+            sendResponse(request, BADREQUEST, badRequest);
         } else {
-            File file = new File("testing.html");
-            sendResponseHeader(request.httpVersion, SUCCESSFUL, file.length());
-            sendResponseFile(file);
+            sendResponse(request, SUCCESSFUL, new File("testing.html"));
         }
+    }
+
+    private void sendResponse(Request request, String status, File file) throws IOException {
+        sendResponseHeader(request.httpVersion, status, file.length());
+        sendFileResponse(file);
     }
 
     private void sendResponseHeader(String httpVersion, String responseMessage, long filelength) throws IOException {
@@ -113,7 +111,7 @@ public class MyHttpServer implements Runnable {
         out.flush();
     }
 
-    private void sendResponseFile(File file) throws IOException {
+    private void sendFileResponse(File file) throws IOException {
         BufferedOutputStream dataOut = new BufferedOutputStream(socket.getOutputStream());
         dataOut.write(readFileData(file), 0, (int) file.length());
         dataOut.flush();
@@ -141,22 +139,26 @@ public class MyHttpServer implements Runnable {
         public Request(String request) {
             String[] splitRequest = request.split(" ");
             this.type = splitRequest[0];
-            if (splitRequest[1].contains("?")) {
-                String[] splitPath = splitRequest[1].split("\\?");
+            String originalPath = splitRequest[1];
+            if (originalPath.contains("?")) {
+                String[] splitPath = originalPath.split("\\?");
                 this.path = splitPath[0];
                 getParameters(splitPath[1]);
             } else {
-                this.path = splitRequest[1];
+                this.path = originalPath;
             }
             this.httpVersion = splitRequest[2];
+
             System.out.println(this.type + " " + this.path);
         }
 
-        private void getParameters(String splitPath) {
-            String[] queryParams = splitPath.split("&");
-            for (String queryParam : queryParams) {
-                String[] queryParamSplit = queryParam.split("=");
-                this.parameters.put(queryParamSplit[0], queryParamSplit[1]);
+        private void getParameters(String allKeysValues) {
+            String[] allKeysValuesArray = allKeysValues.split("&");
+            for (String keyValue : allKeysValuesArray) {
+                String[] keyValueArray = keyValue.split("=");
+                String key = keyValueArray[0];
+                String value = keyValueArray[1];
+                this.parameters.put(key, value);
             }
         }
     }

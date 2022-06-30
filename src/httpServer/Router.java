@@ -9,7 +9,7 @@ public class Router {
     public Router() {
     }
 
-    public boolean routing(MyHttpServer.Request request) throws IOException {
+    public boolean routingExists(MyHttpServer.Request request) throws IOException {
         switch (request.path) {
             case "idcode":
                 if (request.parameters.containsKey("id")) {
