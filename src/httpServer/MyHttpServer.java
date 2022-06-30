@@ -12,11 +12,14 @@ import java.util.HashMap;
 public class MyHttpServer implements Runnable {
 
     public Socket socket;
+    public Router router = new Router();
     private static final int LOCALPORT = 8080;
     private static final String SUCCESSFUL = " 200 OK";
     private static final String NOTFOUND = " 404 FILE NOT FOUND";
+    private static final String BADREQUEST = " 400 BAD REQUEST";
     private static boolean serverListening = true;
     File fileNotFound = new File("test1/404.html");
+    File badRequest = new File("test1/400.html");
 
     public MyHttpServer(Socket c) {
         this.socket = c;
@@ -51,7 +54,7 @@ public class MyHttpServer implements Runnable {
                 setPath(request);
 
                 if (request.type.equals("GET")) {
-                    sendHttpResponse(request, new File(request.path));
+                    sendHttpResponse(request);
                 }
 //                if ((request.type.equals("POST"))) {
 //                    EEIdNumber eeIdNumber = new EEIdNumber(request.parameters.get("id"));
@@ -76,7 +79,7 @@ public class MyHttpServer implements Runnable {
         }
     }
 
-    private void writeToFile(Request request, EEIdNumber eeIdNumber) throws IOException {
+    private void writeToFile(String routingResult) throws IOException {
         FileOutputStream out = new FileOutputStream("testing.html");
 
         String beginning = "<!DOCTYPE html>\n" +
@@ -88,9 +91,7 @@ public class MyHttpServer implements Runnable {
                 "<body>\n" +
                 "<div>\n";
         out.write(beginning.getBytes(StandardCharsets.UTF_8));
-        out.write(("Isikukood " + request.parameters.get("id") + " on " + eeIdNumber.validateIdNumber() + "<br>").getBytes(StandardCharsets.UTF_8));
-        out.write(("Sünniaeg " + eeIdNumber.birthDate + "<br>").getBytes(StandardCharsets.UTF_8));
-        out.write(("Nimi " + request.parameters.get("name")).getBytes(StandardCharsets.UTF_8));
+        out.write(routingResult.getBytes(StandardCharsets.UTF_8));
         String ending = "\n" +
                 "</div>\n" +
                 "</body>\n" +
@@ -99,13 +100,27 @@ public class MyHttpServer implements Runnable {
         out.close();
     }
 
-    private void sendHttpResponse(Request request, File file) throws IOException {
-        if (file.exists()) {
-            sendResponseHeader(request.httpVersion, SUCCESSFUL, file.length());
-            sendResponseFile(file);
-        } else {
-            sendResponseHeader(request.httpVersion, NOTFOUND, fileNotFound.length());
-            sendResponseFile(fileNotFound);
+    private void sendHttpResponse(Request request) throws IOException {
+        if (request.path.contains(".")) {
+            File file = new File(request.path);
+            if (file.exists()) {
+                sendResponseHeader(request.httpVersion, SUCCESSFUL, file.length());
+                sendResponseFile(file);
+            }else{
+                sendResponseHeader(request.httpVersion, NOTFOUND, fileNotFound.length());
+                sendResponseFile(fileNotFound);
+            }
+        } else{
+            String routerResult = router.routing(request);
+            if (routerResult.equals("400")) {
+                sendResponseHeader(request.httpVersion, BADREQUEST, badRequest.length());
+                sendResponseFile(badRequest);
+            } else {
+                writeToFile(routerResult);
+                File file = new File("testing.html");
+                sendResponseHeader(request.httpVersion, SUCCESSFUL, file.length());
+                sendResponseFile(file);
+            }
         }
     }
 
