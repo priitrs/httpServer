@@ -1,3 +1,5 @@
+package httpServer;
+
 import idNumber.EEIdNumber;
 
 import java.io.*;
@@ -24,12 +26,10 @@ public class MyHttpServer implements Runnable {
 
         try {
             ServerSocket serverSocket = new ServerSocket(LOCALPORT);
-            System.out.println("Server started.\n" + serverSocket);
-
             while (serverListening) {
                 try {
                     MyHttpServer myHttpServer = new MyHttpServer(serverSocket.accept());
-                    System.out.println("Incoming connection.\n" + myHttpServer.socket);
+                    System.out.println("Incoming connection.  " + myHttpServer.socket);
                     new Thread(myHttpServer).start();
                 } catch (IOException e) {
                     e.printStackTrace();
@@ -39,27 +39,24 @@ public class MyHttpServer implements Runnable {
             e.printStackTrace();
             serverListening = false;
         }
-
     }
 
     @Override
     public void run() {
-        System.out.println("Thread run() started");
         boolean connected = true;
 
         while (connected) {
             try {
                 Request request = new Request(recieveHttpRequest());
-                System.out.println(request.type + " " + request.path);
+                setPath(request);
 
                 if (request.type.equals("GET")) {
-                    setPath(request);
-                    if (request.path.equals("testing.html")) {
-                        EEIdNumber eeIdNumber = new EEIdNumber(request.parameters.get("id"));
-                        writeToFile(request, eeIdNumber);
-                    }
                     sendHttpResponse(request, new File(request.path));
                 }
+//                if ((request.type.equals("POST"))) {
+//                    EEIdNumber eeIdNumber = new EEIdNumber(request.parameters.get("id"));
+//                    writeToFile(request, eeIdNumber);
+//                }
             } catch (NullPointerException | IOException e) {
                 connected = false;
             }
@@ -67,16 +64,20 @@ public class MyHttpServer implements Runnable {
         System.out.println("Socket " + socket + " disconnected");
     }
 
+    private String recieveHttpRequest() throws IOException {
+        BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+        return in.readLine();
+    }
+
     protected void setPath(Request request) {
-        if (request.path.equals("/")) {
+        request.path = request.path.replaceFirst("/", "");
+        if (request.path.equals("")) {
             request.path = "index.html";
-        } else {
-            request.path = request.path.replaceFirst("/", "");
         }
     }
 
     private void writeToFile(Request request, EEIdNumber eeIdNumber) throws IOException {
-        FileOutputStream out = new FileOutputStream(request.path);
+        FileOutputStream out = new FileOutputStream("testing.html");
 
         String beginning = "<!DOCTYPE html>\n" +
                 "<html lang=\"en\">\n" +
@@ -87,7 +88,7 @@ public class MyHttpServer implements Runnable {
                 "<body>\n" +
                 "<div>\n";
         out.write(beginning.getBytes(StandardCharsets.UTF_8));
-        out.write(("Isikukood " + request.parameters.get("id")+ " on " + eeIdNumber.validateIdNumber() + "<br>").getBytes(StandardCharsets.UTF_8));
+        out.write(("Isikukood " + request.parameters.get("id") + " on " + eeIdNumber.validateIdNumber() + "<br>").getBytes(StandardCharsets.UTF_8));
         out.write(("Sünniaeg " + eeIdNumber.birthDate + "<br>").getBytes(StandardCharsets.UTF_8));
         out.write(("Nimi " + request.parameters.get("name")).getBytes(StandardCharsets.UTF_8));
         String ending = "\n" +
@@ -96,7 +97,6 @@ public class MyHttpServer implements Runnable {
                 "</html>";
         out.write(ending.getBytes(StandardCharsets.UTF_8));
         out.close();
-
     }
 
     private void sendHttpResponse(Request request, File file) throws IOException {
@@ -109,26 +109,20 @@ public class MyHttpServer implements Runnable {
         }
     }
 
-    private String recieveHttpRequest() throws IOException {
-        BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-        return in.readLine();
+    private void sendResponseHeader(String httpVersion, String responseMessage, long filelength) throws IOException {
+        PrintWriter out = new PrintWriter(socket.getOutputStream());
+        out.println(httpVersion + responseMessage);
+        out.println("PRIIT Server 1.0!");
+        out.println("Date: " + new Date());
+        out.println("Content-length: " + filelength);
+        out.println("");
+        out.flush();
     }
 
     private void sendResponseFile(File file) throws IOException {
         BufferedOutputStream dataOut = new BufferedOutputStream(socket.getOutputStream());
         dataOut.write(readFileData(file), 0, (int) file.length());
         dataOut.flush();
-    }
-
-    private void sendResponseHeader(String httpVersion, String responseMessage, long filelength) throws IOException {
-        PrintWriter out = new PrintWriter(socket.getOutputStream());
-        out.println(httpVersion + responseMessage);
-        out.println("PRIIT Server 1.0!");
-        out.println("Date: " + new Date());
-//                out.println("Content-type: " + "text/html");
-        out.println("Content-length: " + filelength);
-        out.println("");
-        out.flush();
     }
 
     private byte[] readFileData(File file) throws IOException {
@@ -161,6 +155,7 @@ public class MyHttpServer implements Runnable {
                 this.path = splitRequest[1];
             }
             this.httpVersion = splitRequest[2];
+            System.out.println(this.type + " " + this.path);
         }
 
         private void getParameters(String splitPath) {

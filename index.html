@@ -16,11 +16,44 @@
     <input type="text" placeholder="Sisesta isikukood" name="isikukood" id="idcode">
     <br>
     <br>
-    <button onclick="function validate(){}" type="submit">Valideeri isikukood</button>
+    <input type="text" placeholder="Sisesta nimi" name="nimi" id="personName">
+    <br>
+    <br>
+    <button onclick="httpPostAsync()" type="submit">Valideeri isikukood</button>
+    <br>
+    <br>
+    <button onclick="location.href='http://localhost:8080/testing.html'"  type="submit">Vaata tulemust</button>
 </div>
 </body>
 </html>
 <script>
+    function httpGet()
+    {
+        var idcode = document.getElementById("idcode").value;
+        var personName = document.getElementById("personName").value;
+        var url = 'http://localhost:8080/idnumber?id='+idcode + '&name='+ personName;
+        var xmlHttp = new XMLHttpRequest();
+        xmlHttp.open( "GET", url, false ); // false for synchronous request
+        xmlHttp.send( null );
+        return xmlHttp.responseText;
+
+
+    }
+    function httpPostAsync(theUrl, callback)
+    {
+        var idcode = document.getElementById("idcode").value;
+        var personName = document.getElementById("personName").value;
+        var url = 'http://localhost:8080/index.html?id='+idcode + '&name='+ personName;
+        var xmlHttp = new XMLHttpRequest();
+
+        xmlHttp.onreadystatechange = function() {
+            if (xmlHttp.readyState === 4 && xmlHttp.status === 200)
+                callback(xmlHttp.responseURL);
+        }
+        xmlHttp.open("POST", url, true); // true for asynchronous
+        xmlHttp.send(null);
+    }
+
 
 
 </script>
