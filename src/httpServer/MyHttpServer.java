@@ -5,6 +5,7 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Map;
 
 public class MyHttpServer implements Runnable {
 
@@ -126,7 +127,7 @@ public class MyHttpServer implements Runnable {
         String type;
         String path;
         String httpVersion;
-        HashMap<String, String> parameters = new HashMap<>();
+        Map<String, String> parameters = new HashMap<>();
 
         public Request(String request) {
             String[] splitRequest = request.split(" ");
@@ -136,8 +137,6 @@ public class MyHttpServer implements Runnable {
 
             extractParametersFromPath();
             ifEmptySetPathToIndex();
-
-            System.out.println(this.type + " " + this.path);
         }
 
         private void extractParametersFromPath() {
@@ -148,12 +147,6 @@ public class MyHttpServer implements Runnable {
             }
         }
 
-        private void ifEmptySetPathToIndex() {
-            if (this.path.equals("")) {
-                this.path = "index.html";
-            }
-        }
-
         private void getParameters(String allKeysValues) {
             String[] allKeysValuesArray = allKeysValues.split("&");
             for (String keyValue : allKeysValuesArray) {
@@ -161,6 +154,12 @@ public class MyHttpServer implements Runnable {
                 String key = keyValueArray[0];
                 String value = keyValueArray[1];
                 this.parameters.put(key, value);
+            }
+        }
+
+        private void ifEmptySetPathToIndex() {
+            if (this.path.equals("")) {
+                this.path = "index.html";
             }
         }
     }
