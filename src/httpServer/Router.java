@@ -12,7 +12,7 @@ public class Router {
     public boolean routingExists(MyHttpServer.Request request) throws IOException {
         switch (request.path) {
             case "idcode":
-                if (request.parameters.containsKey("id")) {
+                if (request.parameters.containsKey("id") && request.parameters.get("id") != null) {
                     service.validateIdCode(request.parameters.get("id"));
                     return true;
                 }
