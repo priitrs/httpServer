@@ -3,9 +3,7 @@ package httpServer;
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 public class MyHttpServer implements Runnable {
 
@@ -49,9 +47,9 @@ public class MyHttpServer implements Runnable {
 
         while (connected) {
             try {
-                String httpRequest = receiveHttpRequest();
-                if (httpRequest != null) {
-                    Request request = new Request(httpRequest);
+                List<String> rawRequest = receiveHttpRequest();
+                if (rawRequest.get(0) != null) {
+                    Request request = new Request(rawRequest);
                     if (request.type.equals("GET")) {
                         sendHttpResponse(request);
                     }
@@ -63,9 +61,19 @@ public class MyHttpServer implements Runnable {
         System.out.println("Socket " + socket + " disconnected");
     }
 
-    private String receiveHttpRequest() throws IOException {
+    private List<String> receiveHttpRequest() throws IOException {
+        boolean input = true;
         BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-        return in.readLine();
+        List<String> rawRequest = new ArrayList<>();
+        while (input) {
+            String lastLine = in.readLine();
+            System.out.println(lastLine);
+            rawRequest.add(lastLine);
+            if (lastLine.equals("")) {
+                input = false;
+            }
+        }
+        return rawRequest;
     }
 
     private void sendHttpResponse(Request request) throws IOException {
@@ -128,13 +136,14 @@ public class MyHttpServer implements Runnable {
     }
 
     public static class Request {
+        List<String> rawRequest = new ArrayList<>();
         String type;
         String path;
         String httpVersion;
         Map<String, String> parameters = new HashMap<>();
 
-        public Request(String request) {
-            String[] splitRequest = request.split(" ");
+        public Request(List<String> rawRequest) {
+            String[] splitRequest = rawRequest.get(0).split(" ");
             this.type = splitRequest[0];
             this.path = splitRequest[1].replaceFirst("/", "");
             this.httpVersion = splitRequest[2];
