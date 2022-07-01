@@ -3,11 +3,14 @@ package httpServer;
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.http.HttpRequest;
+import java.nio.file.Files;
 import java.util.*;
 
 public class MyHttpServer implements Runnable {
 
     public Socket socket;
+    private final BufferedReader in;
     public Router router = new Router();
     private static final int LOCALPORT = 8080;
     private static final String SUCCESSFUL = " 200 OK";
@@ -18,8 +21,9 @@ public class MyHttpServer implements Runnable {
     File fileNotFound = new File(WEBROOT + "errors/404.html");
     private static boolean serverListening = true;
 
-    public MyHttpServer(Socket c) {
+    public MyHttpServer(Socket c) throws IOException {
         this.socket = c;
+        this.in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
     }
 
     public static void main(String[] args) {
@@ -51,7 +55,21 @@ public class MyHttpServer implements Runnable {
                 if (rawRequest.get(0) != null) {
                     Request request = new Request(rawRequest);
                     if (request.type.equals("GET")) {
-                        sendHttpResponse(request);
+                        chooseResponseForGet(request);
+                    } else if (request.type.equals("POST")) {
+//                        System.out.println(in.readLine());
+                        PrintWriter out = new PrintWriter(socket.getOutputStream());
+                        out.println(request.httpVersion + SUCCESSFUL);
+                        out.println("Content-Type: application/json");
+                        out.println("Content-Length: 44");
+                        out.println("");
+                        out.println("{\"midagi\":\"midagi\",\"midagi\":\"midagi\"}");
+                        out.flush();
+                        String lastLine = in.readLine();
+                        System.out.println(lastLine);
+
+                    } else {
+                        sendResponse(request, BADREQUEST, readFileData(badRequest));
                     }
                 }
             } catch (IOException e) {
@@ -62,21 +80,20 @@ public class MyHttpServer implements Runnable {
     }
 
     private List<String> receiveHttpRequest() throws IOException {
-        boolean input = true;
-        BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
         List<String> rawRequest = new ArrayList<>();
-        while (input) {
+        while (true) {
             String lastLine = in.readLine();
             System.out.println(lastLine);
             rawRequest.add(lastLine);
             if (lastLine.equals("")) {
-                input = false;
+                break;
             }
         }
+
         return rawRequest;
     }
 
-    private void sendHttpResponse(Request request) throws IOException {
+    private void chooseResponseForGet(Request request) throws IOException {
         if (request.path.contains(".")) {
             fileResponse(request);
         } else {
@@ -87,22 +104,22 @@ public class MyHttpServer implements Runnable {
     private void fileResponse(Request request) throws IOException {
         File file = new File(WEBROOT + request.path);
         if (file.exists()) {
-            sendResponse(request, SUCCESSFUL, file);
+            sendResponse(request, SUCCESSFUL, readFileData(file));
         } else {
-            sendResponse(request, NOTFOUND, fileNotFound);
+            sendResponse(request, NOTFOUND, readFileData(fileNotFound));
         }
     }
 
     private void routingResponse(Request request) throws IOException {
-        if (!router.routingExists(request)) {
-            sendResponse(request, BADREQUEST, badRequest);
+        if (router.routingExists(request)) {
+            sendResponse(request, SUCCESSFUL, readFileData(new File(WEBROOT + "testing.html")));
         } else {
-            sendResponse(request, SUCCESSFUL, new File(WEBROOT + "testing.html"));
+            sendResponse(request, BADREQUEST, readFileData(badRequest));
         }
     }
 
-    private void sendResponse(Request request, String status, File file) throws IOException {
-        sendHeader(request.httpVersion, status, file.length());
+    private void sendResponse(Request request, String status, byte[] file) throws IOException {
+        sendHeader(request.httpVersion, status, file.length);
         sendFile(file);
     }
 
@@ -116,27 +133,18 @@ public class MyHttpServer implements Runnable {
         out.flush();
     }
 
-    private void sendFile(File file) throws IOException {
-        BufferedOutputStream dataOut = new BufferedOutputStream(socket.getOutputStream());
-        dataOut.write(readFileData(file), 0, (int) file.length());
+    private void sendFile(byte[] file) throws IOException {
+        OutputStream dataOut = socket.getOutputStream();
+        dataOut.write(file);
         dataOut.flush();
     }
 
     private byte[] readFileData(File file) throws IOException {
-        FileInputStream fileInputStream = null;
-        byte[] filedata = new byte[(int) file.length()];
-        try {
-            fileInputStream = new FileInputStream(file);
-            fileInputStream.read(filedata);
-        } finally {
-            if (fileInputStream != null)
-                fileInputStream.close();
-        }
-        return filedata;
+        return Files.readAllBytes(file.toPath());
     }
 
     public static class Request {
-        List<String> rawRequest = new ArrayList<>();
+        List<String> rawRequest;
         String type;
         String path;
         String httpVersion;
@@ -147,10 +155,12 @@ public class MyHttpServer implements Runnable {
             this.type = splitRequest[0];
             this.path = splitRequest[1].replaceFirst("/", "");
             this.httpVersion = splitRequest[2];
+            this.rawRequest = rawRequest;
 
             extractParametersFromPath();
             ifEmptySetPathToIndex();
         }
+
 
         private void extractParametersFromPath() {
             if (this.path.contains("?")) {

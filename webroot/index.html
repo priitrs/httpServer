@@ -22,7 +22,7 @@
     <button onclick="httpPostAsync()" type="submit">Valideeri isikukood</button>
     <br>
     <br>
-    <button onclick="location.href='testing.html'" type="submit">Vaata tulemust</button>
+    <button onclick="post()" type="submit">Saada json</button>
 </div>
 </body>
 </html>
@@ -52,6 +52,21 @@
         }
         xmlHttp.open("POST", url, true); // true for asynchronous
         xmlHttp.send(null);
+    }
+
+    function post() {
+        var xhr = new XMLHttpRequest();
+        var url = "/";
+        xhr.open("POST", url, true);
+        xhr.setRequestHeader("Content-Type", "application/json");
+        xhr.onreadystatechange = function () {
+            if (xhr.readyState === 4 && xhr.status === 200) {
+                var json = JSON.parse(xhr.responseText);
+                console.log(json.email + ", " + json.password);
+            }
+        };
+        var data = JSON.stringify({"email": "hey@mail.com", "password": "101010"});
+        xhr.send(data);
     }
 
 
