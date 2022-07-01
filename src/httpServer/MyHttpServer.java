@@ -127,7 +127,7 @@ public class MyHttpServer implements Runnable {
         return filedata;
     }
 
-    protected static class Request {
+    public static class Request {
         String type;
         String path;
         String httpVersion;
@@ -165,6 +165,22 @@ public class MyHttpServer implements Runnable {
             if (this.path.equals("")) {
                 this.path = "index.html";
             }
+        }
+
+        public String getType() {
+            return type;
+        }
+
+        public String getPath() {
+            return path;
+        }
+
+        public String getHttpVersion() {
+            return httpVersion;
+        }
+
+        public Map<String, String> getParameters() {
+            return parameters;
         }
     }
 }
