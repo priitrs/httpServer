@@ -13,11 +13,12 @@ public class MyHttpServer implements Runnable {
     public Router router = new Router();
     private static final int LOCALPORT = 8080;
     private static final String SUCCESSFUL = " 200 OK";
-    private static final String NOTFOUND = " 404 FILE NOT FOUND";
     private static final String BADREQUEST = " 400 BAD REQUEST";
+    private static final String NOTFOUND = " 404 FILE NOT FOUND";
+    private static final String WEBROOT = "webroot/";
+    File badRequest = new File(WEBROOT + "errors/400.html");
+    File fileNotFound = new File(WEBROOT + "errors/404.html");
     private static boolean serverListening = true;
-    File fileNotFound = new File("test1/404.html");
-    File badRequest = new File("test1/400.html");
 
     public MyHttpServer(Socket c) {
         this.socket = c;
@@ -48,9 +49,12 @@ public class MyHttpServer implements Runnable {
 
         while (connected) {
             try {
-                Request request = new Request(receiveHttpRequest());
-                if (request.type.equals("GET")) {
-                    sendHttpResponse(request);
+                String httpRequest = receiveHttpRequest();
+                if (httpRequest != null) {
+                    Request request = new Request(httpRequest);
+                    if (request.type.equals("GET")) {
+                        sendHttpResponse(request);
+                    }
                 }
             } catch (IOException e) {
                 connected = false;
@@ -66,22 +70,22 @@ public class MyHttpServer implements Runnable {
 
     private void sendHttpResponse(Request request) throws IOException {
         if (request.path.contains(".")) {
-            sendResponseFile(request);
-        } else{
-            sendRoutingResponse(request);
+            fileResponse(request);
+        } else {
+            routingResponse(request);
         }
     }
 
-    private void sendResponseFile(Request request) throws IOException {
-        File file = new File(request.path);
+    private void fileResponse(Request request) throws IOException {
+        File file = new File(WEBROOT + request.path);
         if (file.exists()) {
             sendResponse(request, SUCCESSFUL, file);
-        }else{
+        } else {
             sendResponse(request, NOTFOUND, fileNotFound);
         }
     }
 
-    private void sendRoutingResponse(Request request) throws IOException {
+    private void routingResponse(Request request) throws IOException {
         if (!router.routingExists(request)) {
             sendResponse(request, BADREQUEST, badRequest);
         } else {
@@ -90,11 +94,11 @@ public class MyHttpServer implements Runnable {
     }
 
     private void sendResponse(Request request, String status, File file) throws IOException {
-        sendResponseHeader(request.httpVersion, status, file.length());
-        sendResponseFile(file);
+        sendHeader(request.httpVersion, status, file.length());
+        sendFile(file);
     }
 
-    private void sendResponseHeader(String httpVersion, String responseMessage, long filelength) throws IOException {
+    private void sendHeader(String httpVersion, String responseMessage, long filelength) throws IOException {
         PrintWriter out = new PrintWriter(socket.getOutputStream());
         out.println(httpVersion + responseMessage);
         out.println("PRIIT Server 1.0!");
@@ -104,7 +108,7 @@ public class MyHttpServer implements Runnable {
         out.flush();
     }
 
-    private void sendResponseFile(File file) throws IOException {
+    private void sendFile(File file) throws IOException {
         BufferedOutputStream dataOut = new BufferedOutputStream(socket.getOutputStream());
         dataOut.write(readFileData(file), 0, (int) file.length());
         dataOut.flush();
