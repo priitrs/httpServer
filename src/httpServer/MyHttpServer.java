@@ -65,7 +65,6 @@ public class MyHttpServer implements Runnable {
     }
 
     protected void setPath(Request request) {
-        request.path = request.path.replaceFirst("/", "");
         if (request.path.equals("")) {
             request.path = "index.html";
         }
@@ -73,13 +72,13 @@ public class MyHttpServer implements Runnable {
 
     private void sendHttpResponse(Request request) throws IOException {
         if (request.path.contains(".")) {
-            sendFileResponse(request);
+            sendResponseFile(request);
         } else{
             sendRoutingResponse(request);
         }
     }
 
-    private void sendFileResponse(Request request) throws IOException {
+    private void sendResponseFile(Request request) throws IOException {
         File file = new File(request.path);
         if (file.exists()) {
             sendResponse(request, SUCCESSFUL, file);
@@ -98,7 +97,7 @@ public class MyHttpServer implements Runnable {
 
     private void sendResponse(Request request, String status, File file) throws IOException {
         sendResponseHeader(request.httpVersion, status, file.length());
-        sendFileResponse(file);
+        sendResponseFile(file);
     }
 
     private void sendResponseHeader(String httpVersion, String responseMessage, long filelength) throws IOException {
@@ -111,7 +110,7 @@ public class MyHttpServer implements Runnable {
         out.flush();
     }
 
-    private void sendFileResponse(File file) throws IOException {
+    private void sendResponseFile(File file) throws IOException {
         BufferedOutputStream dataOut = new BufferedOutputStream(socket.getOutputStream());
         dataOut.write(readFileData(file), 0, (int) file.length());
         dataOut.flush();
@@ -139,17 +138,27 @@ public class MyHttpServer implements Runnable {
         public Request(String request) {
             String[] splitRequest = request.split(" ");
             this.type = splitRequest[0];
-            String originalPath = splitRequest[1];
-            if (originalPath.contains("?")) {
-                String[] splitPath = originalPath.split("\\?");
-                this.path = splitPath[0];
-                getParameters(splitPath[1]);
-            } else {
-                this.path = originalPath;
-            }
+            this.path = splitRequest[1].replaceFirst("/", "");
             this.httpVersion = splitRequest[2];
 
+            extractParametersFromPath();
+            ifEmptySetPathToIndex();
+
             System.out.println(this.type + " " + this.path);
+        }
+
+        private void extractParametersFromPath() {
+            if (this.path.contains("?")) {
+                String[] splitPath = this.path.split("\\?");
+                this.path = splitPath[0];
+                getParameters(splitPath[1]);
+            }
+        }
+
+        private void ifEmptySetPathToIndex() {
+            if (this.path.equals("")) {
+                this.path = "index.html";
+            }
         }
 
         private void getParameters(String allKeysValues) {
