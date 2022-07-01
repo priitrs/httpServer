@@ -48,7 +48,6 @@ public class MyHttpServer implements Runnable {
         while (connected) {
             try {
                 Request request = new Request(receiveHttpRequest());
-                setPath(request);
                 if (request.type.equals("GET")) {
                     sendHttpResponse(request);
                 }
@@ -62,12 +61,6 @@ public class MyHttpServer implements Runnable {
     private String receiveHttpRequest() throws IOException {
         BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
         return in.readLine();
-    }
-
-    protected void setPath(Request request) {
-        if (request.path.equals("")) {
-            request.path = "index.html";
-        }
     }
 
     private void sendHttpResponse(Request request) throws IOException {
