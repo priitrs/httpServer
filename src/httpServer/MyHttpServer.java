@@ -89,7 +89,7 @@ public class MyHttpServer implements Runnable {
         if (!router.routingExists(request)) {
             sendResponse(request, BADREQUEST, badRequest);
         } else {
-            sendResponse(request, SUCCESSFUL, new File("testing.html"));
+            sendResponse(request, SUCCESSFUL, new File(WEBROOT + "testing.html"));
         }
     }
 

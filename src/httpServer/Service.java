@@ -21,7 +21,7 @@ public class Service {
     }
 
     private void writeToFile(String routingResult) throws IOException {
-        FileOutputStream out = new FileOutputStream("testing.html");
+        FileOutputStream out = new FileOutputStream("webroot/testing.html");
 
         String beginning = "<!DOCTYPE html>\n" +
                 "<html lang=\"en\">\n" +
