@@ -3,7 +3,6 @@ package httpServer;
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.net.http.HttpRequest;
 import java.nio.file.Files;
 import java.util.*;
 
@@ -57,16 +56,24 @@ public class MyHttpServer implements Runnable {
                     if (request.type.equals("GET")) {
                         chooseResponseForGet(request);
                     } else if (request.type.equals("POST")) {
-//                        System.out.println(in.readLine());
+                        try {
+                            StringBuilder stringBuilder = new StringBuilder();
+                            char[] arr = new char[request.contentLength];
+                            in.read(arr);
+                            stringBuilder.append(arr, 0, request.contentLength);
+                            String s = stringBuilder.toString();
+                            System.out.println(s);
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+
+
                         PrintWriter out = new PrintWriter(socket.getOutputStream());
                         out.println(request.httpVersion + SUCCESSFUL);
                         out.println("Content-Type: application/json");
-                        out.println("Content-Length: 44");
+                        out.println("Content-Length: " + request.contentLength);
                         out.println("");
-                        out.println("{\"midagi\":\"midagi\",\"midagi\":\"midagi\"}");
                         out.flush();
-                        String lastLine = in.readLine();
-                        System.out.println(lastLine);
 
                     } else {
                         sendResponse(request, BADREQUEST, readFileData(badRequest));
@@ -89,7 +96,6 @@ public class MyHttpServer implements Runnable {
                 break;
             }
         }
-
         return rawRequest;
     }
 
@@ -148,6 +154,7 @@ public class MyHttpServer implements Runnable {
         String type;
         String path;
         String httpVersion;
+        int contentLength;
         Map<String, String> parameters = new HashMap<>();
 
         public Request(List<String> rawRequest) {
@@ -156,6 +163,11 @@ public class MyHttpServer implements Runnable {
             this.path = splitRequest[1].replaceFirst("/", "");
             this.httpVersion = splitRequest[2];
             this.rawRequest = rawRequest;
+            for (String requestLine : rawRequest) {
+                if (requestLine.contains("Content-Length: ")) {
+                    this.contentLength = Integer.parseInt(requestLine.replaceFirst("Content-Length: ",""));
+                }
+            }
 
             extractParametersFromPath();
             ifEmptySetPathToIndex();
