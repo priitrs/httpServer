@@ -1,6 +1,10 @@
 package httpServer;
 
+import salary.GrossSalary;
+import salary.SalaryCalculator;
+
 import java.io.IOException;
+import java.math.BigDecimal;
 
 public class Router {
 
@@ -19,14 +23,12 @@ public class Router {
                 }
                 return false;
 
-            case "salary":
-                service.calculateSalary(request.parameters.get("grossSalary"));
-                return true;
-
             case "json":
                 String json = service.sendJson();
+                return true;
 
-
+            case "salary":
+                SalaryCalculator calculation = new SalaryCalculator(new GrossSalary(BigDecimal.valueOf(1000)), false, true, true, true, true);
                 return true;
 
             default:
