@@ -40,5 +40,9 @@ public class Service {
         out.write(ending.getBytes(StandardCharsets.UTF_8));
         out.close();
     }
+
+    public String sendJson() {
+        return "{\"Brutopalk\":\"1500\",\"Netopalk\":\"1200\"}";
+    }
 }
 

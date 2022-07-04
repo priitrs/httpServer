@@ -23,6 +23,12 @@ public class Router {
                 service.calculateSalary(request.parameters.get("grossSalary"));
                 return true;
 
+            case "json":
+                String json = service.sendJson();
+
+
+                return true;
+
             default:
                 return false;
         }

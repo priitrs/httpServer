@@ -23,10 +23,18 @@
     <br>
     <br>
     <button onclick="post()" type="submit">Saada json</button>
+    <br>
+    <br>
+    <button onclick="receiveJson()" type="submit">Võta vastu json</button>
+    <br>
+    <br>
+    <textarea name="jsontext" id="jsontext" cols="30" rows="10">{{jsontext}}</textarea>
 </div>
 </body>
 </html>
 <script>
+
+
     function httpGet()
     {
         var idcode = document.getElementById("idcode").value;
@@ -50,7 +58,7 @@
             if (xmlHttp.readyState === 4 && xmlHttp.status === 200)
                 callback(xmlHttp.responseURL);
         }
-        xmlHttp.open("POST", url, true); // true for asynchronous
+        xmlHttp.open("GET", url, true); // true for asynchronous
         xmlHttp.send(null);
     }
 
@@ -59,14 +67,30 @@
         var url = "/";
         xhr.open("POST", url, true);
         xhr.setRequestHeader("Content-Type", "application/json");
+        // xhr.onreadystatechange = function () {
+        //     if (xhr.readyState === 4 && xhr.status === 200) {
+        //         var json = JSON.parse(xhr.responseText);
+        //         console.log(json.email + ", " + json.password);
+        //     }
+        // };
+
+        var data = JSON.stringify({"email": "hey@mail.com", "password": "101010"});
+        xhr.send(data);
+    }
+
+    function receiveJson() {
+        var xhr = new XMLHttpRequest();
+        var url = "/json";
+        xhr.open("POST", url, true);
+        xhr.send();
         xhr.onreadystatechange = function () {
             if (xhr.readyState === 4 && xhr.status === 200) {
                 var json = JSON.parse(xhr.responseText);
-                console.log(json.email + ", " + json.password);
+                console.log(json.Brutopalk + ", " + json.Netopalk);
+                document.append()
             }
         };
-        var data = JSON.stringify({"email": "hey@mail.com", "password": "101010"});
-        xhr.send(data);
+
     }
 
 

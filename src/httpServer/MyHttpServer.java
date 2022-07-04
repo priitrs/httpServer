@@ -56,23 +56,10 @@ public class MyHttpServer implements Runnable {
                     if (request.type.equals("GET")) {
                         chooseResponseForGet(request);
                     } else if (request.type.equals("POST")) {
-                        try {
-                            StringBuilder stringBuilder = new StringBuilder();
-                            char[] arr = new char[request.contentLength];
-                            in.read(arr);
-                            stringBuilder.append(arr, 0, request.contentLength);
-                            String s = stringBuilder.toString();
-                            System.out.println(s);
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
-
-
+                        getRequestBody(request);
+                        sendPostHeaderResponse(request);
                         PrintWriter out = new PrintWriter(socket.getOutputStream());
-                        out.println(request.httpVersion + SUCCESSFUL);
-                        out.println("Content-Type: application/json");
-                        out.println("Content-Length: " + request.contentLength);
-                        out.println("");
+                        out.println("{\"Brutopalk\":\"1500\",\"Netopalk\":\"1200\"}");;
                         out.flush();
 
                     } else {
@@ -86,16 +73,53 @@ public class MyHttpServer implements Runnable {
         System.out.println("Socket " + socket + " disconnected");
     }
 
+    private void getRequestBody(Request request) {
+        if (request.contentLength > 0) {
+            try {
+                StringBuilder stringBuilder = new StringBuilder();
+                char[] arr = new char[request.contentLength];
+                in.read(arr);
+                stringBuilder.append(arr, 0, request.contentLength);
+                request.body = stringBuilder.toString();
+                System.out.println(request.body);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            extractJson(request);
+        }
+    }
+
+    private void extractJson(Request request) {
+        String json = request.body.replace("{", "");
+        json = json.replace("}", "");
+        json = json.replace("\"", "");
+        String[] keyValuePairs = json.split(",");
+        for (String keyValuePair : keyValuePairs) {
+            String[] keyValue = keyValuePair.split(":");
+            request.jsonMap.put(keyValue[0], keyValue[1]);
+        }
+    }
+
+    private void sendPostHeaderResponse(Request request) throws IOException {
+        PrintWriter out = new PrintWriter(socket.getOutputStream());
+        out.println(request.httpVersion + SUCCESSFUL);
+        out.println("Content-Type: application/json");
+        int length = "{\"Brutopalk\":\"1500\",\"Netopalk\":\"1200\"}".length();
+        out.println("Content-Length: " + length);
+        out.println("");
+        out.flush();
+    }
+
     private List<String> receiveHttpRequest() throws IOException {
         List<String> rawRequest = new ArrayList<>();
         while (true) {
             String lastLine = in.readLine();
-            System.out.println(lastLine);
             rawRequest.add(lastLine);
             if (lastLine.equals("")) {
                 break;
             }
         }
+        System.out.println(rawRequest.get(0));
         return rawRequest;
     }
 
@@ -156,6 +180,8 @@ public class MyHttpServer implements Runnable {
         String httpVersion;
         int contentLength;
         Map<String, String> parameters = new HashMap<>();
+        Map<String, String> jsonMap = new HashMap<>();
+        String body;
 
         public Request(List<String> rawRequest) {
             String[] splitRequest = rawRequest.get(0).split(" ");
@@ -165,7 +191,7 @@ public class MyHttpServer implements Runnable {
             this.rawRequest = rawRequest;
             for (String requestLine : rawRequest) {
                 if (requestLine.contains("Content-Length: ")) {
-                    this.contentLength = Integer.parseInt(requestLine.replaceFirst("Content-Length: ",""));
+                    this.contentLength = Integer.parseInt(requestLine.replaceFirst("Content-Length: ", ""));
                 }
             }
 
@@ -173,6 +199,9 @@ public class MyHttpServer implements Runnable {
             ifEmptySetPathToIndex();
         }
 
+        public void setJsonMap(Map<String, String> jsonMap) {
+            this.jsonMap = jsonMap;
+        }
 
         private void extractParametersFromPath() {
             if (this.path.contains("?")) {
