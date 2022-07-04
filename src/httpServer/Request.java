@@ -9,10 +9,10 @@ public class Request {
     String type;
     String path;
     String httpVersion;
+    String body;
     int contentLength;
     Map<String, String> parameters = new HashMap<>();
     Map<String, String> jsonMap = new HashMap<>();
-    String body;
 
     public Request(List<String> rawRequest) {
         String[] splitRequest = rawRequest.get(0).split(" ");

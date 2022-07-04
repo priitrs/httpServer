@@ -20,9 +20,9 @@ public class MyHttpServer implements Runnable {
     File fileNotFound = new File(WEBROOT + "errors/404.html");
 
 
-    public MyHttpServer(Socket c) throws IOException {
-        this.socket = c;
-        this.in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+    public MyHttpServer(Socket socket) throws IOException {
+        this.socket = socket;
+        this.in = new BufferedReader(new InputStreamReader(this.socket.getInputStream()));
     }
 
     public static void main(String[] args) {
@@ -47,7 +47,8 @@ public class MyHttpServer implements Runnable {
     public void run() {
         while (true) {
             try {
-                sendResponse(new Request(receiveHttpRequest()));
+                Request httpRequest = new Request(receiveHttpRequest());
+                sendResponse(httpRequest);
             } catch (IOException e) {
                 e.printStackTrace();
                 break;
