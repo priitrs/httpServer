@@ -18,7 +18,7 @@ public class MyHttpServer implements Runnable {
     private static final String WEBROOT = "webroot/";
     File badRequest = new File(WEBROOT + "errors/400.html");
     File fileNotFound = new File(WEBROOT + "errors/404.html");
-    private static boolean serverListening = true;
+
 
     public MyHttpServer(Socket c) throws IOException {
         this.socket = c;
@@ -26,51 +26,63 @@ public class MyHttpServer implements Runnable {
     }
 
     public static void main(String[] args) {
-
         try {
             ServerSocket serverSocket = new ServerSocket(LOCALPORT);
-            while (serverListening) {
+            while (true) {
                 try {
                     MyHttpServer myHttpServer = new MyHttpServer(serverSocket.accept());
                     System.out.println("Incoming connection.  " + myHttpServer.socket);
                     new Thread(myHttpServer).start();
                 } catch (IOException e) {
                     e.printStackTrace();
+                    break;
                 }
             }
         } catch (IOException e) {
             e.printStackTrace();
-            serverListening = false;
         }
     }
 
     @Override
     public void run() {
-        boolean connected = true;
-
-        while (connected) {
+        while (true) {
             try {
-                List<String> rawRequest = receiveHttpRequest();
-                if (rawRequest.get(0) != null) {
-                    Request request = new Request(rawRequest);
-                    if (request.type.equals("GET")) {
-                        chooseResponseForGet(request);
-                    } else if (request.type.equals("POST")) {
-                        getRequestBody(request);
-                        sendPostHeaderResponse(request);
-                        PrintWriter out = new PrintWriter(socket.getOutputStream());
-                        out.println("{\"Brutopalk\":\"1500\",\"Netopalk\":\"1200\"}");;
-                        out.flush();
-
-                    } else {
-                        sendResponse(request, BADREQUEST, readFileData(badRequest));
-                    }
-                }
+                sendResponse(new Request(receiveHttpRequest()));
             } catch (IOException e) {
-                connected = false;
+                e.printStackTrace();
+                break;
             }
         }
         System.out.println("Socket " + socket + " disconnected");
+    }
+
+    private List<String> receiveHttpRequest() throws IOException {
+        List<String> rawRequest = new ArrayList<>();
+        while (true) {
+            String lastLine = in.readLine();
+            rawRequest.add(lastLine);
+            if (lastLine.equals("")) {
+                break;
+            }
+        }
+        System.out.println(rawRequest.get(0));
+        return rawRequest;
+    }
+
+    private void sendResponse(Request request) throws IOException {
+        if (request.type.equals("GET")) {
+            chooseResponseForGet(request);
+        } else if (request.type.equals("POST")) {
+            getRequestBody(request);
+            sendPostHeaderResponse(request);
+            PrintWriter out = new PrintWriter(socket.getOutputStream());
+            out.println("{\"Brutopalk\":\"1500\",\"Netopalk\":\"1200\"}");
+            ;
+            out.flush();
+
+        } else {
+            sendResponse(request, BADREQUEST, readFileData(badRequest));
+        }
     }
 
     private void getRequestBody(Request request) {
@@ -108,19 +120,6 @@ public class MyHttpServer implements Runnable {
         out.println("Content-Length: " + length);
         out.println("");
         out.flush();
-    }
-
-    private List<String> receiveHttpRequest() throws IOException {
-        List<String> rawRequest = new ArrayList<>();
-        while (true) {
-            String lastLine = in.readLine();
-            rawRequest.add(lastLine);
-            if (lastLine.equals("")) {
-                break;
-            }
-        }
-        System.out.println(rawRequest.get(0));
-        return rawRequest;
     }
 
     private void chooseResponseForGet(Request request) throws IOException {
@@ -171,76 +170,5 @@ public class MyHttpServer implements Runnable {
 
     private byte[] readFileData(File file) throws IOException {
         return Files.readAllBytes(file.toPath());
-    }
-
-    public static class Request {
-        List<String> rawRequest;
-        String type;
-        String path;
-        String httpVersion;
-        int contentLength;
-        Map<String, String> parameters = new HashMap<>();
-        Map<String, String> jsonMap = new HashMap<>();
-        String body;
-
-        public Request(List<String> rawRequest) {
-            String[] splitRequest = rawRequest.get(0).split(" ");
-            this.type = splitRequest[0];
-            this.path = splitRequest[1].replaceFirst("/", "");
-            this.httpVersion = splitRequest[2];
-            this.rawRequest = rawRequest;
-            for (String requestLine : rawRequest) {
-                if (requestLine.contains("Content-Length: ")) {
-                    this.contentLength = Integer.parseInt(requestLine.replaceFirst("Content-Length: ", ""));
-                }
-            }
-
-            extractParametersFromPath();
-            ifEmptySetPathToIndex();
-        }
-
-        public void setJsonMap(Map<String, String> jsonMap) {
-            this.jsonMap = jsonMap;
-        }
-
-        private void extractParametersFromPath() {
-            if (this.path.contains("?")) {
-                String[] splitPath = this.path.split("\\?");
-                this.path = splitPath[0];
-                getParameters(splitPath[1]);
-            }
-        }
-
-        private void getParameters(String allKeysValues) {
-            String[] allKeysValuesArray = allKeysValues.split("&");
-            for (String keyValue : allKeysValuesArray) {
-                String[] keyValueArray = keyValue.split("=");
-                String key = keyValueArray[0];
-                String value = keyValueArray[1];
-                this.parameters.put(key, value);
-            }
-        }
-
-        private void ifEmptySetPathToIndex() {
-            if (this.path.equals("")) {
-                this.path = "index.html";
-            }
-        }
-
-        public String getType() {
-            return type;
-        }
-
-        public String getPath() {
-            return path;
-        }
-
-        public String getHttpVersion() {
-            return httpVersion;
-        }
-
-        public Map<String, String> getParameters() {
-            return parameters;
-        }
     }
 }

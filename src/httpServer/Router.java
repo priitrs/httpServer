@@ -13,7 +13,7 @@ public class Router {
     public Router() {
     }
 
-    public boolean routingExists(MyHttpServer.Request request) throws IOException {
+    public boolean routingExists(Request request) throws IOException {
         switch (request.path) {
 
             case "idcode":
