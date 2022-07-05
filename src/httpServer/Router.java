@@ -1,10 +1,6 @@
 package httpServer;
 
-import salary.GrossSalary;
-import salary.SalaryCalculator;
-
 import java.io.IOException;
-import java.math.BigDecimal;
 
 public class Router {
 
@@ -21,15 +17,13 @@ public class Router {
                     return service.validateIdCode(request.parameters.get("id"));
 
                 }
-                return "vigane sisend";
+                return "";
 
-            case "json":
-                return service.sendJson();
+            case "validateCalculate":
+                return "[" + service.validateIdCode(request.jsonMap.get("idcode")) + "," + service.calculateSalary(request.jsonMap.get("salary"))+ "]";
 
             case "salary":
-                SalaryCalculator calculation = new SalaryCalculator(new GrossSalary(BigDecimal.valueOf(1000)), false, true, true, true, true);
-
-                return calculation.toString();
+                return service.calculateSalary(request.parameters.get("salary"));
 
             default:
                 return "";

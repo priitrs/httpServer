@@ -73,15 +73,15 @@ public abstract class Salary {
 
     @Override
     public String toString() {
-        return "salary.Salary{" +
-                "socialTax=" + socialTax +
-                ", employerUnemploymentInsurance=" + employerUnemploymentInsurance +
-                ", employeeUnemploymentInsurance=" + employeeUnemploymentInsurance +
-                ", pension=" + pension +
-                ", incomeTax=" + incomeTax +
-                ", totalSalary=" + totalSalary +
-                ", grossSalary=" + grossSalary +
-                ", netSalary=" + netSalary +
+        return "{" +
+                "\"socialTax\":" + "\"" + socialTax + "\"" +
+                ",\"employerUnemploymentInsurance\":" + "\"" + employerUnemploymentInsurance + "\"" +
+                ",\"employeeUnemploymentInsurance\":" + "\"" + employeeUnemploymentInsurance + "\"" +
+                ",\"pension\":" + "\"" + pension + "\"" +
+                ",\"incomeTax\":" + "\"" + incomeTax + "\"" +
+                ",\"totalSalary\":" + "\"" + totalSalary + "\"" +
+                ",\"grossSalary\":" + "\"" + grossSalary + "\"" +
+                ",\"netSalary\":" + "\"" + netSalary + "\"" +
                 '}';
     }
 }

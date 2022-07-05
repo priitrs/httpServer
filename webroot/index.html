@@ -16,16 +16,13 @@
     <button onclick="validateIdCode()" type="submit">Valideeri isikukood</button>
     <br>
     <br>
-    <button onclick="post()" type="submit">Saada json</button>
+    <input type="text" placeholder="Sisesta brutopalk" name="salary" id="salary">
     <br>
+    <button onclick="calculateSalary()" type="submit">Calculate Salary</button>
     <br>
-    <button onclick="receiveJson()" type="submit">Võta vastu json</button>
+    <textarea id="salaryResult" cols="40" rows="10"></textarea>
     <br>
-    <br>
-    <textarea name="jsontext" id="jsontext" cols="60" rows="3"></textarea>
-    <br>
-    <br>
-    <h4 id="gross"></h4>
+    <button onclick="validateCalculate()" type="submit">Valideeri isikukood ja arvuta palk</button>
 
 </div>
 </body>
@@ -49,9 +46,11 @@
 
     }
 
-    function post() {
+    function validateCalculate() {
+        var idcode = document.getElementById("idcode").value;
+        var salary = document.getElementById("salary").value;
         var xhr = new XMLHttpRequest();
-        var url = "/";
+        var url = "/validateCalculate";
         xhr.open("POST", url, true);
         xhr.setRequestHeader("Content-Type", "application/json");
         // xhr.onreadystatechange = function () {
@@ -61,23 +60,20 @@
         //     }
         // };
 
-        var data = JSON.stringify({"email": "hey@mail.com", "password": "101010"});
+        var data = JSON.stringify({"idcode": idcode, "salary": salary});
         xhr.send(data);
     }
 
-    function receiveJson() {
+    function calculateSalary() {
+        var salary = document.getElementById("salary").value;
         var xhr = new XMLHttpRequest();
-        var url = "/json";
+        var url = "/salary?salary="+salary;
         xhr.open("POST", url, true);
-
         xhr.send();
         xhr.onreadystatechange = function () {
             if (xhr.readyState === 4 && xhr.status === 200) {
-                var json = JSON.parse(xhr.responseText);
-                console.log(json.Brutopalk + ", " + json.Netopalk);
-
-                document.getElementById("gross").innerText = json.Brutopalk;
-                document.getElementById("jsontext").innerText = xhr.responseText;
+                // var json = JSON.parse(xhr.responseText);
+                document.getElementById("salaryResult").innerText = xhr.responseText;
                 document.append()
             }
         };

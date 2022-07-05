@@ -79,8 +79,6 @@ public class MyHttpServer implements Runnable {
         }
         if (request.type.equals("GET") || request.type.equals("POST")) {
             chooseResponseType(request);
-//            String json = "{\"Brutopalk\":\"1500\",\"Netopalk\":\"1200\"}";
-//            sendResponse(request, SUCCESSFUL, json.getBytes(StandardCharsets.UTF_8));
         } else {
             sendResponse(request, BADREQUEST, readFileData(badRequest));
         }
@@ -110,7 +108,6 @@ public class MyHttpServer implements Runnable {
         } else {
             request.contentType = "application/json";
             sendResponse(request, SUCCESSFUL, routingResult.getBytes(StandardCharsets.UTF_8));
-
         }
     }
 
