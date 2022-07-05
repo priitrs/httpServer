@@ -109,4 +109,5 @@ public class SalaryCalculator extends Salary {
         this.useEmployeeUnemploymentInsurance = useEmployeeUnemploymentInsurance;
         this.usePension = usePension;
     }
+
 }

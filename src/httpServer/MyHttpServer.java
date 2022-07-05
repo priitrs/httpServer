@@ -3,8 +3,11 @@ package httpServer;
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
 
 public class MyHttpServer implements Runnable {
 
@@ -48,7 +51,7 @@ public class MyHttpServer implements Runnable {
         while (true) {
             try {
                 Request httpRequest = new Request(receiveHttpRequest());
-                chooseResponse(httpRequest);
+                chooseResponseAction(httpRequest);
             } catch (IOException e) {
                 e.printStackTrace();
                 break;
@@ -70,21 +73,20 @@ public class MyHttpServer implements Runnable {
         return rawRequest;
     }
 
-    private void chooseResponse(Request request) throws IOException {
-        if (request.type.equals("GET")) {
-            sendResponseForGet(request);
-        } else if (request.type.equals("POST")) {
+    private void chooseResponseAction(Request request) throws IOException {
+        if (request.type.equals("POST")) {
             receiveRequestBody(request);
-            sendPostHeaderResponse(request);
-//            PrintWriter out = new PrintWriter(socket.getOutputStream());
-//            out.println("{\"Brutopalk\":\"1500\",\"Netopalk\":\"1200\"}");
-//            out.flush();
+        }
+        if (request.type.equals("GET") || request.type.equals("POST")) {
+            chooseResponseType(request);
+//            String json = "{\"Brutopalk\":\"1500\",\"Netopalk\":\"1200\"}";
+//            sendResponse(request, SUCCESSFUL, json.getBytes(StandardCharsets.UTF_8));
         } else {
             sendResponse(request, BADREQUEST, readFileData(badRequest));
         }
     }
 
-    private void sendResponseForGet(Request request) throws IOException {
+    private void chooseResponseType(Request request) throws IOException {
         if (request.path.contains(".")) {
             fileResponse(request);
         } else {
@@ -102,10 +104,13 @@ public class MyHttpServer implements Runnable {
     }
 
     private void routingResponse(Request request) throws IOException {
-        if (router.routingExists(request)) {
-            sendResponse(request, SUCCESSFUL, readFileData(new File(WEBROOT + "testing.html")));
-        } else {
+        String routingResult = router.routingExists(request);
+        if (routingResult.equals("")) {
             sendResponse(request, BADREQUEST, readFileData(badRequest));
+        } else {
+            request.contentType = "application/json";
+            sendResponse(request, SUCCESSFUL, routingResult.getBytes(StandardCharsets.UTF_8));
+
         }
     }
 
@@ -156,16 +161,6 @@ public class MyHttpServer implements Runnable {
             String[] keyValue = keyValuePair.split(":");
             request.jsonMap.put(keyValue[0], keyValue[1]);
         }
-    }
-
-    private void sendPostHeaderResponse(Request request) throws IOException {
-        PrintWriter out = new PrintWriter(socket.getOutputStream());
-        out.println(request.httpVersion + SUCCESSFUL);
-        out.println("Content-Type: application/json");
-//        int length = "{\"Brutopalk\":\"1500\",\"Netopalk\":\"1200\"}".length();
-//        out.println("Content-Length: " + length);
-        out.println("");
-        out.flush();
     }
 
     private byte[] readFileData(File file) throws IOException {

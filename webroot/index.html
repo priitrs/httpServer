@@ -86,6 +86,7 @@
         var xhr = new XMLHttpRequest();
         var url = "/json";
         xhr.open("POST", url, true);
+
         xhr.send();
         xhr.onreadystatechange = function () {
             if (xhr.readyState === 4 && xhr.status === 200) {
