@@ -7,19 +7,13 @@
 <body>
 <div>
     Hello World!
-    <br>
     <div>
         <img src="test1/test.jpg" alt="" width="300">
     </div>
-    <br>
-    <br>
     <input type="text" placeholder="Sisesta isikukood" name="isikukood" id="idcode">
-    <br>
-    <br>
-    <input type="text" placeholder="Sisesta nimi" name="nimi" id="personName">
-    <br>
-    <br>
-    <button onclick="httpPostAsync()" type="submit">Valideeri isikukood</button>
+    <h4 id="isIdCodeValid">Is id code valid: </h4>
+    <h4 id="birthDate">Birth date is: </h4>
+    <button onclick="validateIdCode()" type="submit">Valideeri isikukood</button>
     <br>
     <br>
     <button onclick="post()" type="submit">Saada json</button>
@@ -28,7 +22,7 @@
     <button onclick="receiveJson()" type="submit">Võta vastu json</button>
     <br>
     <br>
-    <textarea name="jsontext" id="jsontext" cols="30" rows="10"></textarea>
+    <textarea name="jsontext" id="jsontext" cols="60" rows="3"></textarea>
     <br>
     <br>
     <h4 id="gross"></h4>
@@ -38,7 +32,7 @@
 </html>
 <script>
 
-    function httpPostAsync() {
+    function validateIdCode() {
         var idcode = document.getElementById("idcode").value;
         var xhr = new XMLHttpRequest();
         var url = "/idcode?id="+idcode;
@@ -47,7 +41,8 @@
         xhr.onreadystatechange = function () {
             if (xhr.readyState === 4 && xhr.status === 200) {
                 var json = JSON.parse(xhr.responseText);
-                document.getElementById("jsontext").innerText = xhr.responseText;
+                document.getElementById("isIdCodeValid").innerText = "Is id code valid: " + json.Validation;
+                document.getElementById("birthDate").innerText = "Birth date is: " + json.BirthDate;
                 document.append()
             }
         };
