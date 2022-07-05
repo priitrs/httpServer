@@ -11,6 +11,7 @@ public class Request {
     String httpVersion;
     String body;
     int contentLength;
+    String contentType;
     Map<String, String> parameters = new HashMap<>();
     Map<String, String> jsonMap = new HashMap<>();
 
@@ -23,6 +24,11 @@ public class Request {
         for (String requestLine : rawRequest) {
             if (requestLine.contains("Content-Length: ")) {
                 this.contentLength = Integer.parseInt(requestLine.replaceFirst("Content-Length: ", ""));
+            }
+        }
+        for (String requestLine : rawRequest) {
+            if (requestLine.contains("Content-Type: ")) {
+                this.contentType = requestLine.replaceFirst("Content-Type: ", "");
             }
         }
 

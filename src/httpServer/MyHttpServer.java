@@ -23,7 +23,6 @@ public class MyHttpServer implements Runnable {
     public MyHttpServer(Socket socket) throws IOException {
         this.socket = socket;
         this.in = new BufferedReader(new InputStreamReader(this.socket.getInputStream()));
-//        new BufferedReader(
     }
 
     public static void main(String[] args) {
@@ -49,7 +48,7 @@ public class MyHttpServer implements Runnable {
         while (true) {
             try {
                 Request httpRequest = new Request(receiveHttpRequest());
-                sendResponse(httpRequest);
+                chooseResponse(httpRequest);
             } catch (IOException e) {
                 e.printStackTrace();
                 break;
@@ -71,60 +70,21 @@ public class MyHttpServer implements Runnable {
         return rawRequest;
     }
 
-    private void sendResponse(Request request) throws IOException {
+    private void chooseResponse(Request request) throws IOException {
         if (request.type.equals("GET")) {
-            chooseResponseForGet(request);
+            sendResponseForGet(request);
         } else if (request.type.equals("POST")) {
-            getRequestBody(request);
+            receiveRequestBody(request);
             sendPostHeaderResponse(request);
-            PrintWriter out = new PrintWriter(socket.getOutputStream());
-            out.println("{\"Brutopalk\":\"1500\",\"Netopalk\":\"1200\"}");
-            ;
-            out.flush();
-
+//            PrintWriter out = new PrintWriter(socket.getOutputStream());
+//            out.println("{\"Brutopalk\":\"1500\",\"Netopalk\":\"1200\"}");
+//            out.flush();
         } else {
             sendResponse(request, BADREQUEST, readFileData(badRequest));
         }
     }
 
-    private void getRequestBody(Request request) {
-        if (request.contentLength > 0) {
-            try {
-                StringBuilder stringBuilder = new StringBuilder();
-                char[] arr = new char[request.contentLength];
-                in.read(arr);
-                stringBuilder.append(arr, 0, request.contentLength);
-                request.body = stringBuilder.toString();
-                System.out.println(request.body);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            extractJson(request);
-        }
-    }
-
-    private void extractJson(Request request) {
-        String json = request.body.replace("{", "");
-        json = json.replace("}", "");
-        json = json.replace("\"", "");
-        String[] keyValuePairs = json.split(",");
-        for (String keyValuePair : keyValuePairs) {
-            String[] keyValue = keyValuePair.split(":");
-            request.jsonMap.put(keyValue[0], keyValue[1]);
-        }
-    }
-
-    private void sendPostHeaderResponse(Request request) throws IOException {
-        PrintWriter out = new PrintWriter(socket.getOutputStream());
-        out.println(request.httpVersion + SUCCESSFUL);
-        out.println("Content-Type: application/json");
-        int length = "{\"Brutopalk\":\"1500\",\"Netopalk\":\"1200\"}".length();
-        out.println("Content-Length: " + length);
-        out.println("");
-        out.flush();
-    }
-
-    private void chooseResponseForGet(Request request) throws IOException {
+    private void sendResponseForGet(Request request) throws IOException {
         if (request.path.contains(".")) {
             fileResponse(request);
         } else {
@@ -150,16 +110,17 @@ public class MyHttpServer implements Runnable {
     }
 
     private void sendResponse(Request request, String status, byte[] file) throws IOException {
-        sendHeader(request.httpVersion, status, file.length);
+        sendHeader(request, status, file.length);
         sendFile(file);
     }
 
-    private void sendHeader(String httpVersion, String responseMessage, long filelength) throws IOException {
+    private void sendHeader(Request request, String responseMessage, long filelength) throws IOException {
         PrintWriter out = new PrintWriter(socket.getOutputStream());
-        out.println(httpVersion + responseMessage);
+        out.println(request.httpVersion + responseMessage);
         out.println("PRIIT Server 1.0!");
         out.println("Date: " + new Date());
         out.println("Content-length: " + filelength);
+        out.println("Content-Type: " + request.contentType);
         out.println("");
         out.flush();
     }
@@ -168,6 +129,43 @@ public class MyHttpServer implements Runnable {
         OutputStream dataOut = socket.getOutputStream();
         dataOut.write(file);
         dataOut.flush();
+    }
+
+    private void receiveRequestBody(Request request) {
+        if (request.contentLength > 0) {
+            try {
+                StringBuilder stringBuilder = new StringBuilder();
+                char[] arr = new char[request.contentLength];
+                in.read(arr);
+                stringBuilder.append(arr, 0, request.contentLength);
+                request.body = stringBuilder.toString();
+                System.out.println(request.body);
+            } catch (NullPointerException | IOException e) {
+                e.printStackTrace();
+            }
+            extractJson(request);
+        }
+    }
+
+    private void extractJson(Request request) {
+        String json = request.body.replace("{", "");
+        json = json.replace("}", "");
+        json = json.replace("\"", "");
+        String[] keyValuePairs = json.split(",");
+        for (String keyValuePair : keyValuePairs) {
+            String[] keyValue = keyValuePair.split(":");
+            request.jsonMap.put(keyValue[0], keyValue[1]);
+        }
+    }
+
+    private void sendPostHeaderResponse(Request request) throws IOException {
+        PrintWriter out = new PrintWriter(socket.getOutputStream());
+        out.println(request.httpVersion + SUCCESSFUL);
+        out.println("Content-Type: application/json");
+//        int length = "{\"Brutopalk\":\"1500\",\"Netopalk\":\"1200\"}".length();
+//        out.println("Content-Length: " + length);
+        out.println("");
+        out.flush();
     }
 
     private byte[] readFileData(File file) throws IOException {
