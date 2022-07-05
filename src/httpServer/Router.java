@@ -18,8 +18,8 @@ public class Router {
 
             case "idcode":
                 if (request.parameters.containsKey("id") && request.parameters.get("id") != null) {
-                    service.validateIdCode(request.parameters.get("id"));
-                    return "valideeritud";
+                    return service.validateIdCode(request.parameters.get("id"));
+
                 }
                 return "vigane sisend";
 

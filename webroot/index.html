@@ -38,32 +38,20 @@
 </html>
 <script>
 
-
-    function httpGet()
-    {
+    function httpPostAsync() {
         var idcode = document.getElementById("idcode").value;
-        var personName = document.getElementById("personName").value;
-        var url = 'http://localhost:8080/idnumber?id='+idcode + '&name='+ personName;
-        var xmlHttp = new XMLHttpRequest();
-        xmlHttp.open( "GET", url, false ); // false for synchronous request
-        xmlHttp.send( null );
-        return xmlHttp.responseText;
+        var xhr = new XMLHttpRequest();
+        var url = "/idcode?id="+idcode;
+        xhr.open("POST", url, true);
+        xhr.send();
+        xhr.onreadystatechange = function () {
+            if (xhr.readyState === 4 && xhr.status === 200) {
+                var json = JSON.parse(xhr.responseText);
+                document.getElementById("jsontext").innerText = xhr.responseText;
+                document.append()
+            }
+        };
 
-
-    }
-    function httpPostAsync(theUrl, callback)
-    {
-        var idcode = document.getElementById("idcode").value;
-        var personName = document.getElementById("personName").value;
-        var url = 'http://localhost:8080/index.html?id='+idcode + '&name='+ personName;
-        var xmlHttp = new XMLHttpRequest();
-
-        xmlHttp.onreadystatechange = function() {
-            if (xmlHttp.readyState === 4 && xmlHttp.status === 200)
-                callback(xmlHttp.responseURL);
-        }
-        xmlHttp.open("GET", url, true); // true for asynchronous
-        xmlHttp.send(null);
     }
 
     function post() {

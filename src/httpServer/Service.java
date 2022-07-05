@@ -11,9 +11,9 @@ public class Service {
     public Service() {
     }
 
-    public void validateIdCode(String id) throws IOException {
+    public String validateIdCode(String id) {
         EEIdNumber eeIdNumber = new EEIdNumber(id);
-        writeToFile(eeIdNumber.validateIdNumber() + " " + eeIdNumber.birthDate);
+        return "{\"Validation\":\""+ eeIdNumber.validateIdNumber() + "\",\"BirthDate\":\"" + eeIdNumber.birthDate + "\"}";
     }
 
     public void calculateSalary(String grossSalary) throws IOException {
