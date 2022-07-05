@@ -28,7 +28,11 @@
     <button onclick="receiveJson()" type="submit">Võta vastu json</button>
     <br>
     <br>
-    <textarea name="jsontext" id="jsontext" cols="30" rows="10">{{jsontext}}</textarea>
+    <textarea name="jsontext" id="jsontext" cols="30" rows="10"></textarea>
+    <br>
+    <br>
+    <h4 id="gross"></h4>
+
 </div>
 </body>
 </html>
@@ -87,6 +91,9 @@
             if (xhr.readyState === 4 && xhr.status === 200) {
                 var json = JSON.parse(xhr.responseText);
                 console.log(json.Brutopalk + ", " + json.Netopalk);
+
+                document.getElementById("gross").innerText = json.Brutopalk;
+                document.getElementById("jsontext").innerText = xhr.responseText;
                 document.append()
             }
         };

@@ -23,6 +23,7 @@ public class MyHttpServer implements Runnable {
     public MyHttpServer(Socket socket) throws IOException {
         this.socket = socket;
         this.in = new BufferedReader(new InputStreamReader(this.socket.getInputStream()));
+//        new BufferedReader(
     }
 
     public static void main(String[] args) {
