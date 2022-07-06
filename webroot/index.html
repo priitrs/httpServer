@@ -20,65 +20,91 @@
     </script>
 </head>
 <body>
-<div>
-    Hello World!
+<div >
+    <br>
     <div>
-        <img src="test1/test.jpg" alt="" width="300">
+        <img src="files/logo.jpg" alt="" width="300">
     </div>
-    <input type="text" placeholder="Sisesta isikukood" name="isikukood" id="idcode">
-    <h6 id="isIdCodeValid">Is id code valid: </h6>
-    <h6 id="birthDate">Birth date is: </h6>
-    <button onclick="validateIdCode()" type="button" class="btn btn-dark">Valideeri isikukood</button>
     <br>
-    <br>
-    <input type="text" placeholder="Sisesta brutopalk" name="salary" id="salary">
-    <br>
-    <br>
-    <button onclick="calculateSalary()" type="button" class="btn btn-dark">Calculate Salary</button>
-    <br>
-    <br>
-    <textarea id="salaryResult" cols="40" rows="2"></textarea>
-    <br>
-    <table class="table">
-        <tbody>
-        <tr>
-            <td>total Salary</td>
-            <td id="totalSalary"></td>
-        </tr>
-        <tr>
-            <td>social Tax</td>
-            <td id="socialTax"></td>
-        </tr>
-        <tr>
-            <td>employer Unemployment Insurance</td>
-            <td id="employerUnemploymentInsurance"></td>
-        </tr>
-        <tr class="table-success">
-            <td>gross Salary</td>
-            <td id="grossSalary"></td>
-        </tr>
-        <tr>
-            <td>income Tax</td>
-            <td id="incomeTax"></td>
-        </tr>
-        <tr>
-            <td>pension</td>
-            <td id="pension"></td>
-        </tr>
-        <tr>
-            <td>employee Unemployment Insurance</td>
-            <td id="employeeUnemploymentInsurance"></td>
-        </tr>
-        <tr>
-            <td>net Salary</td>
-            <td id="netSalary"></td>
-        </tr>
 
-        </tbody>
-    </table>
+    <div class="container-md">
+        <div class="row">
+            <div class="col-4">
+                <div class="input-group mb-3">
+                    <button onclick="validateIdCode()" class="btn btn-dark" type="button"
+                            id="button-addon2">Valideeri isikukood
+                    </button>
+                    <input type="text" class="form-control" placeholder="Sisesta isikukood"
+                           aria-label="Example text with button addon" aria-describedby="button-addon1" name="salary"
+                           id="idcode">
+                </div>
+                <br>
+                <table class="table">
+                    <tbody>
+                    <tr>
+                        <td>Is id code valid:</td>
+                        <td id="isIdCodeValid"></td>
+                    </tr>
+                    <tr>
+                        <td>Birth date is:</td>
+                        <td id="birthDate"></td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="col-4">
+                <div class="input-group mb-3">
+                    <button onclick="calculateSalary()" class="btn btn-dark" type="button"
+                            id="button-addon1">Arvuta
+                    </button>
+                    <input type="text" class="form-control" placeholder="Sisesta brutopalk"
+                           aria-label="Example text with button addon" aria-describedby="button-addon1" name="salary"
+                           id="salary">
+                </div>
+                <br>
+                <table class="table">
+                    <tbody>
+                    <tr class="table-secondary">
+                        <td>total Salary</td>
+                        <td id="totalSalary"></td>
+                    </tr>
+                    <tr>
+                        <td>social Tax</td>
+                        <td id="socialTax"></td>
+                    </tr>
+                    <tr>
+                        <td>employer Unemployment Insurance</td>
+                        <td id="employerUnemploymentInsurance"></td>
+                    </tr>
+                    <tr class="table-secondary">
+                        <td>gross Salary</td>
+                        <td id="grossSalary"></td>
+                    </tr>
+                    <tr>
+                        <td>income Tax</td>
+                        <td id="incomeTax"></td>
+                    </tr>
+                    <tr>
+                        <td>pension</td>
+                        <td id="pension"></td>
+                    </tr>
+                    <tr>
+                        <td>employee Unemployment Insurance</td>
+                        <td id="employeeUnemploymentInsurance"></td>
+                    </tr>
+                    <tr class="table-secondary">
+                        <td>net Salary</td>
+                        <td id="netSalary"></td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
     <br>
     <br>
-    <button onclick="validateCalculate()" type="button" class="btn btn-dark">Valideeri isikukood ja arvuta palk</button>
+    <button onclick="validateCalculate()" type="button" class="btn btn-dark">Valideeri isikukood ja arvuta palk
+    </button>
 
 </div>
 </body>
@@ -94,12 +120,11 @@
         xhr.onreadystatechange = function () {
             if (xhr.readyState === 4 && xhr.status === 200) {
                 var json = JSON.parse(xhr.responseText);
-                document.getElementById("isIdCodeValid").innerText = "Is id code valid: " + json.Validation;
-                document.getElementById("birthDate").innerText = "Birth date is: " + json.BirthDate;
+                document.getElementById("isIdCodeValid").innerText = json.Validation;
+                document.getElementById("birthDate").innerText = json.BirthDate;
                 document.append()
             }
-        };
-
+        }
     }
 
     function validateCalculate() {
@@ -109,13 +134,6 @@
         var url = "/validateCalculate";
         xhr.open("POST", url, true);
         xhr.setRequestHeader("Content-Type", "application/json");
-        // xhr.onreadystatechange = function () {
-        //     if (xhr.readyState === 4 && xhr.status === 200) {
-        //         var json = JSON.parse(xhr.responseText);
-        //         console.log(json.email + ", " + json.password);
-        //     }
-        // };
-
         var data = JSON.stringify({"idcode": idcode, "salary": salary});
         xhr.send(data);
     }
@@ -129,7 +147,7 @@
         xhr.onreadystatechange = function () {
             if (xhr.readyState === 4 && xhr.status === 200) {
                 var json = JSON.parse(xhr.responseText);
-                document.getElementById("salaryResult").innerText = xhr.responseText;
+
                 document.getElementById("totalSalary").innerText = json.totalSalary;
                 document.getElementById("socialTax").innerText = json.socialTax;
                 document.getElementById("employerUnemploymentInsurance").innerText = json.employerUnemploymentInsurance;
@@ -140,7 +158,7 @@
                 document.getElementById("netSalary").innerText = json.netSalary;
                 document.append()
             }
-        };
+        }
 
     }
 
