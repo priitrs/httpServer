@@ -63,11 +63,15 @@ public class MyHttpServer implements Runnable {
     private List<String> receiveHttpRequest() throws IOException {
         List<String> rawRequest = new ArrayList<>();
         while (true) {
+            try {
                 String lastLine = in.readLine();
                 rawRequest.add(lastLine);
                 if (lastLine.equals("")) {
                     break;
                 }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
         System.out.println(rawRequest.get(0));
         return rawRequest;

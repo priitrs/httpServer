@@ -58,7 +58,7 @@
                     <button onclick="calculateSalary()" class="btn btn-dark" type="button"
                             id="button-addon1">Arvuta
                     </button>
-                    <input type="text" class="form-control" placeholder="Sisesta brutopalk"
+                    <input type="text" required class="form-control" placeholder="Sisesta brutopalk"
                            aria-label="Example text with button addon" aria-describedby="button-addon1" name="salary"
                            id="salary">
                 </div>
@@ -190,33 +190,43 @@
 
     function calculateSalary() {
         var salary = document.getElementById("salary").value;
-        var xhr = new XMLHttpRequest();
-        var type = "gross";
-        if (document.getElementById("isNetWage").checked === true) {
-            type = "net";
-        }
-        if (document.getElementById("isTotalWage").checked === true) {
-            type = "total";
-        }
-        var url = "/salary?salary=" + salary + "&type=" + type;
-        xhr.open("POST", url, true);
-        xhr.send();
-        xhr.onreadystatechange = function () {
-            if (xhr.readyState === 4 && xhr.status === 200) {
-                var json = JSON.parse(xhr.responseText);
+        if (required(salary)) {
+            var xhr = new XMLHttpRequest();
+            var type = "gross";
+            if (document.getElementById("isNetWage").checked === true) {
+                type = "net";
+            }
+            if (document.getElementById("isTotalWage").checked === true) {
+                type = "total";
+            }
+            var url = "/salary?salary=" + salary + "&type=" + type;
+            xhr.open("POST", url, true);
+            xhr.send();
+            xhr.onreadystatechange = function () {
+                if (xhr.readyState === 4 && xhr.status === 200) {
+                    var json = JSON.parse(xhr.responseText);
 
-                document.getElementById("totalSalary").innerText = json.totalSalary;
-                document.getElementById("socialTax").innerText = json.socialTax;
-                document.getElementById("employerUnemploymentInsurance").innerText = json.employerUnemploymentInsurance;
-                document.getElementById("grossSalary").innerText = json.grossSalary;
-                document.getElementById("incomeTax").innerText = json.incomeTax;
-                document.getElementById("pension").innerText = json.pension;
-                document.getElementById("employeeUnemploymentInsurance").innerText = json.employeeUnemploymentInsurance;
-                document.getElementById("netSalary").innerText = json.netSalary;
-                document.append()
+                    document.getElementById("totalSalary").innerText = json.totalSalary;
+                    document.getElementById("socialTax").innerText = json.socialTax;
+                    document.getElementById("employerUnemploymentInsurance").innerText = json.employerUnemploymentInsurance;
+                    document.getElementById("grossSalary").innerText = json.grossSalary;
+                    document.getElementById("incomeTax").innerText = json.incomeTax;
+                    document.getElementById("pension").innerText = json.pension;
+                    document.getElementById("employeeUnemploymentInsurance").innerText = json.employeeUnemploymentInsurance;
+                    document.getElementById("netSalary").innerText = json.netSalary;
+                    document.append()
+                }
             }
         }
-
+    }
+    function required(inputtx)
+    {
+        if (inputtx.length === 0)
+        {
+            alert("Sisesta palk!");
+            return false;
+        }
+        return true;
     }
 
 
