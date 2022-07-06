@@ -20,12 +20,13 @@
     </script>
 </head>
 <body>
-<div >
+<div>
     <br>
     <div>
         <img src="files/logo.jpg" alt="" width="300">
     </div>
     <br>
+
 
     <div class="container-md">
         <div class="row">
@@ -35,7 +36,7 @@
                             id="button-addon2">Valideeri isikukood
                     </button>
                     <input type="text" class="form-control" placeholder="Sisesta isikukood"
-                           aria-label="Example text with button addon" aria-describedby="button-addon1" name="salary"
+                           aria-label="Example text with button addon" aria-describedby="button-addon1" name="idcode"
                            id="idcode">
                 </div>
                 <br>
@@ -60,6 +61,57 @@
                     <input type="text" class="form-control" placeholder="Sisesta brutopalk"
                            aria-label="Example text with button addon" aria-describedby="button-addon1" name="salary"
                            id="salary">
+                </div>
+                <div class="row">
+                    <div class="col-4">
+                        <div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="flexRadioDefault" id="isTotalWage">
+                                <label class="form-check-label" for="isTotalWage">
+                                    Kogu palgafond
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="flexRadioDefault" id="isGrossWage"
+                                       checked>
+                                <label class="form-check-label" for="isGrossWage">
+                                    Brutopalk
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="flexRadioDefault" id="isNetWage">
+                                <label class="form-check-label" for="isNetWage">
+                                    Netopalk
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-8">
+                        <div>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="param1">
+                                <label class="form-check-label" for="param1">Sotsiaalmaks min määraga</label>
+                            </div>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="param2" checked>
+                                <label class="form-check-label" for="param2">Arvesta tulumaksuvaba miinimumi</label>
+                            </div>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="param3" checked>
+                                <label class="form-check-label" for="param3">Arvesta tööandja töötuskindlustust</label>
+                            </div>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="param4" checked>
+                                <label class="form-check-label" for="param4">Arvesta tööandja töötuskindlustust</label>
+                            </div>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="param5" checked>
+                                <label class="form-check-label" for="param5">Arvesta pensioni II sammast</label>
+                            </div>
+
+
+                        </div>
+                    </div>
                 </div>
                 <br>
                 <table class="table">
@@ -103,12 +155,10 @@
     </div>
     <br>
     <br>
-    <button onclick="validateCalculate()" type="button" class="btn btn-dark">Valideeri isikukood ja arvuta palk
-    </button>
-
 </div>
 </body>
 </html>
+
 <script>
 
     function validateIdCode() {
@@ -141,7 +191,14 @@
     function calculateSalary() {
         var salary = document.getElementById("salary").value;
         var xhr = new XMLHttpRequest();
-        var url = "/salary?salary=" + salary;
+        var type = "gross";
+        if (document.getElementById("isNetWage").checked === true) {
+            type = "net";
+        }
+        if (document.getElementById("isTotalWage").checked === true) {
+            type = "total";
+        }
+        var url = "/salary?salary=" + salary + "&type=" + type;
         xhr.open("POST", url, true);
         xhr.send();
         xhr.onreadystatechange = function () {

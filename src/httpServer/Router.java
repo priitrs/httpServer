@@ -20,10 +20,10 @@ public class Router {
                 return "";
 
             case "validateCalculate":
-                return "[" + service.validateIdCode(request.jsonMap.get("idcode")) + "," + service.calculateSalary(request.jsonMap.get("salary"))+ "]";
+                return "[" + service.validateIdCode(request.jsonMap.get("idcode")) + "," + service.calculateSalary(request.jsonMap.get("salary"), request.parameters.get("type"))+ "]";
 
             case "salary":
-                return service.calculateSalary(request.parameters.get("salary"));
+                return service.calculateSalary(request.parameters.get("salary"), request.parameters.get("type"));
 
             default:
                 return "";
