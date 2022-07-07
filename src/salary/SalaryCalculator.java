@@ -1,20 +1,17 @@
 package salary;
 
+import lombok.AllArgsConstructor;
+
 import java.math.BigDecimal;
 
 import static java.math.RoundingMode.HALF_UP;
 
+@AllArgsConstructor
 public class SalaryCalculator extends Salary {
-
-
-
 
     @Override
     BigDecimal getGross(boolean useSocialTaxMinRate, boolean useTaxFreeMin, boolean useEmployerUnemploymentInsurance, boolean useEmployeeUnemploymentInsurance, boolean usePension) {
         return grossSalary;
-    }
-
-    public SalaryCalculator() {
     }
 
     public SalaryCalculator(Salary salary, boolean useSocialTaxMinRate, boolean useTaxFreeMin, boolean useEmployerUnemploymentInsurance, boolean useEmployeeUnemploymentInsurance, boolean usePension) {
@@ -31,11 +28,9 @@ public class SalaryCalculator extends Salary {
         BigDecimal taxFreeMonthly;
         BigDecimal monthsInYear = d(12);
         BigDecimal maxTaxFreeMonthly = d(500);
-
         BigDecimal yearlyIncome = grossSalary.multiply(monthsInYear);
         BigDecimal yearlyIncomeMin = d(14400);
         BigDecimal yearlyIncomeMax = d(25200);
-
         BigDecimal yearlyTaxFreeIncomeMax = maxTaxFreeMonthly.add(pension).add(employeeUnemploymentInsurance).multiply(monthsInYear);
 
         if (!useTaxFreeMin) {
@@ -93,21 +88,4 @@ public class SalaryCalculator extends Salary {
         incomeTax = calculatePercent(grossSalary.subtract(employeeUnemploymentInsurance).subtract(pension).subtract(getGrossTaxFreeMonthly()), INCOME_TAX).setScale(2, HALF_UP);
         netSalary = grossSalary.subtract(employeeUnemploymentInsurance).subtract(pension).subtract(incomeTax).setScale(2, HALF_UP);
     }
-
-    public SalaryCalculator(BigDecimal socialTax, BigDecimal employerUnemploymentInsurance, BigDecimal employeeUnemploymentInsurance, BigDecimal pension, BigDecimal incomeTax, BigDecimal totalSalary, BigDecimal grossSalary, BigDecimal netSalary, boolean useSocialTaxMinRate, boolean useTaxFreeMin, boolean useEmployerUnemploymentInsurance, boolean useEmployeeUnemploymentInsurance, boolean usePension) {
-        this.socialTax = socialTax;
-        this.employerUnemploymentInsurance = employerUnemploymentInsurance;
-        this.employeeUnemploymentInsurance = employeeUnemploymentInsurance;
-        this.pension = pension;
-        this.incomeTax = incomeTax;
-        this.totalSalary = totalSalary;
-        this.grossSalary = grossSalary;
-        this.netSalary = netSalary;
-        this.useSocialTaxMinRate = useSocialTaxMinRate;
-        this.useTaxFreeMin = useTaxFreeMin;
-        this.useEmployerUnemploymentInsurance = useEmployerUnemploymentInsurance;
-        this.useEmployeeUnemploymentInsurance = useEmployeeUnemploymentInsurance;
-        this.usePension = usePension;
-    }
-
 }

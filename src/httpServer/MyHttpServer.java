@@ -15,11 +15,11 @@ public class MyHttpServer implements Runnable {
     private final Socket socket;
     private final BufferedReader in;
     private final Router router = new Router();
-    private boolean authorized = false;
+    private boolean isNotAuthorized = true;
     private static final int LOCALPORT = 8080;
     private static final String SUCCESSFUL = " 200 OK";
     private static final String BADREQUEST = " 401 NOT AUTHORIZED";
-    private static final String INCORRECT_USER_PASS = " 401 NOT AUTHORIZED";
+    private static final String NOT_AUTHORIZED = " 401 NOT AUTHORIZED";
     private static final String NOTFOUND = " 404 FILE NOT FOUND";
     private static final String WEBROOT = "webroot/";
     private final File badRequest = new File(WEBROOT + "errors/400.html");
@@ -55,18 +55,17 @@ public class MyHttpServer implements Runnable {
         while (true) {
             try {
                 Request request = new Request(receiveHttpRequest());
-                if (authorized) {
-                    chooseResponseAction(request);
-                } else {
-                    sendUnauthorizedHeader(request);
+                if (isNotAuthorized) {
+                    sendHeader(request,NOT_AUTHORIZED,0);
                     Request authRequest = new Request(receiveHttpRequest());
                     if (getDecodedAuthorization(authRequest).equals("test:test")) {
-                        authorized = true;
-                        chooseResponseAction(authRequest);
+                        isNotAuthorized = false;
+                        request = authRequest;
                     } else {
-                        sendResponse(authRequest, INCORRECT_USER_PASS, readFileData(incorrectUserPass));
+                        sendResponse(authRequest, NOT_AUTHORIZED, readFileData(incorrectUserPass));
                     }
                 }
+                chooseResponseAction(request);
             } catch (IOException e) {
                 e.printStackTrace();
                 break;
@@ -90,16 +89,6 @@ public class MyHttpServer implements Runnable {
         }
         System.out.println(rawRequest.get(0));
         return rawRequest;
-    }
-
-    private void sendUnauthorizedHeader(Request unauthorizedRequest) throws IOException {
-        PrintWriter out = new PrintWriter(socket.getOutputStream());
-        out.println(unauthorizedRequest.getHttpVersion() + " 401" + " Authorization Required");
-        out.println("Date: " + new Date());
-        out.println("Content-length: 0");
-        out.println("WWW-Authenticate: Basic realm=\"protected\"");
-        out.println("");
-        out.flush();
     }
 
     private String getDecodedAuthorization(Request authorizationRequest) {
@@ -155,7 +144,11 @@ public class MyHttpServer implements Runnable {
         out.println("PRIIT Server 1.0!");
         out.println("Date: " + new Date());
         out.println("Content-length: " + filelength);
-        out.println("Content-Type: " + request.getContentType());
+        if (responseMessage.equals(NOT_AUTHORIZED)) {
+            out.println("WWW-Authenticate: Basic realm=\"protected\"");
+        } else {
+            out.println("Content-Type: " + request.getContentType());
+        }
         out.println("");
         out.flush();
     }

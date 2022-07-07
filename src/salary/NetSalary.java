@@ -24,7 +24,6 @@ public class NetSalary extends Salary {
 
     private BigDecimal getGrossSalaryFromNet(BigDecimal salary) {
         if (!usePension) {
-
             SECOND_PILLAR_PENSION = d(0);
         }
          if (!useEmployeeUnemploymentInsurance) {

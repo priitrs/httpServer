@@ -1,9 +1,13 @@
 package httpServer;
 
+import lombok.Data;
+
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+
+@Data
 public class Request {
     private final String type;
     private String path;
@@ -35,7 +39,6 @@ public class Request {
                 this.authorization = requestLine.replaceFirst("Authorization: Basic ", "");
             }
         }
-
         extractParametersFromPath();
         ifEmptySetPathToIndex();
     }
@@ -64,47 +67,4 @@ public class Request {
         }
     }
 
-    public String getType() {
-        return type;
-    }
-
-    public String getPath() {
-        return path;
-    }
-
-    public String getHttpVersion() {
-        return httpVersion;
-    }
-
-    public String getBody() {
-        return body;
-    }
-
-    public String getContentType() {
-        return contentType;
-    }
-
-    public String getAuthorization() {
-        return authorization;
-    }
-
-    public int getContentLength() {
-        return contentLength;
-    }
-
-    public Map<String, String> getParameters() {
-        return parameters;
-    }
-
-    public Map<String, String> getJsonMap() {
-        return jsonMap;
-    }
-
-    public void setBody(String body) {
-        this.body = body;
-    }
-
-    public void setContentType(String contentType) {
-        this.contentType = contentType;
-    }
 }

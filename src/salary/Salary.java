@@ -7,10 +7,6 @@ import static java.math.RoundingMode.HALF_UP;
 
 public abstract class Salary {
 
-    public BigDecimal getGrossSalary() {
-        return grossSalary;
-    }
-
     BigDecimal socialTax;
     BigDecimal employerUnemploymentInsurance;
     BigDecimal employeeUnemploymentInsurance;
