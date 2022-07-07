@@ -5,25 +5,25 @@ import java.net.Socket;
 
 public class Router {
 
-    Service service = new Service();
+    private final Service service = new Service();
 
     public Router() {
     }
 
     public String routingExists(Request request, Socket socket) throws IOException {
-        switch (request.path) {
+        switch (request.getPath()) {
 
             case "idcode":
-                if (request.parameters.containsKey("id") && request.parameters.get("id") != null) {
-                    return service.validateIdCode(request.parameters.get("id"));
+                if (request.getParameters().containsKey("id") && request.getParameters().get("id") != null) {
+                    return service.validateIdCode(request.getParameters().get("id"));
                 }
                 return "";
 
             case "salary":
-                return service.calculateSalary(request.parameters.get("salary"), request.parameters.get("type"));
+                return service.calculateSalary(request.getParameters().get("salary"), request.getParameters().get("type"));
 
             case "validateCalculate":
-                return "[" + service.validateIdCode(request.jsonMap.get("idcode")) + "," + service.calculateSalary(request.jsonMap.get("salary"), request.parameters.get("type")) + "]";
+                return "[" + service.validateIdCode(request.getJsonMap().get("idcode")) + "," + service.calculateSalary(request.getJsonMap().get("salary"), request.getParameters().get("type")) + "]";
 
             default:
                 return "";

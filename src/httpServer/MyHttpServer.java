@@ -12,19 +12,19 @@ import java.util.List;
 
 public class MyHttpServer implements Runnable {
 
-    public Socket socket;
+    private final Socket socket;
     private final BufferedReader in;
-    public Router router = new Router();
-    boolean authorized = false;
+    private final Router router = new Router();
+    private boolean authorized = false;
     private static final int LOCALPORT = 8080;
     private static final String SUCCESSFUL = " 200 OK";
     private static final String BADREQUEST = " 401 NOT AUTHORIZED";
     private static final String INCORRECT_USER_PASS = " 401 NOT AUTHORIZED";
     private static final String NOTFOUND = " 404 FILE NOT FOUND";
     private static final String WEBROOT = "webroot/";
-    File badRequest = new File(WEBROOT + "errors/400.html");
-    File incorrectUserPass = new File(WEBROOT + "errors/401.html");
-    File fileNotFound = new File(WEBROOT + "errors/404.html");
+    private final File badRequest = new File(WEBROOT + "errors/400.html");
+    private final File incorrectUserPass = new File(WEBROOT + "errors/401.html");
+    private final File fileNotFound = new File(WEBROOT + "errors/404.html");
 
 
     public MyHttpServer(Socket socket) throws IOException {
@@ -94,7 +94,7 @@ public class MyHttpServer implements Runnable {
 
     private void sendUnauthorizedHeader(Request unauthorizedRequest) throws IOException {
         PrintWriter out = new PrintWriter(socket.getOutputStream());
-        out.println(unauthorizedRequest.httpVersion + " 401" + " Authorization Required");
+        out.println(unauthorizedRequest.getHttpVersion() + " 401" + " Authorization Required");
         out.println("Date: " + new Date());
         out.println("Content-length: 0");
         out.println("WWW-Authenticate: Basic realm=\"protected\"");
@@ -103,14 +103,14 @@ public class MyHttpServer implements Runnable {
     }
 
     private String getDecodedAuthorization(Request authorizationRequest) {
-        return new String(Base64.getDecoder().decode(authorizationRequest.authorization));
+        return new String(Base64.getDecoder().decode(authorizationRequest.getAuthorization()));
     }
 
     private void chooseResponseAction(Request request) throws IOException {
-        if (request.type.equals("POST")) {
+        if (request.getType().equals("POST")) {
             receiveRequestBody(request);
         }
-        if (request.type.equals("GET") || request.type.equals("POST")) {
+        if (request.getType().equals("GET") || request.getType().equals("POST")) {
             chooseResponseType(request);
         } else {
             sendResponse(request, BADREQUEST, readFileData(badRequest));
@@ -118,7 +118,7 @@ public class MyHttpServer implements Runnable {
     }
 
     private void chooseResponseType(Request request) throws IOException {
-        if (request.path.contains(".")) {
+        if (request.getPath().contains(".")) {
             fileResponse(request);
         } else {
             routingResponse(request);
@@ -126,7 +126,7 @@ public class MyHttpServer implements Runnable {
     }
 
     private void fileResponse(Request request) throws IOException {
-        File file = new File(WEBROOT + request.path);
+        File file = new File(WEBROOT + request.getPath());
         if (file.exists()) {
             sendResponse(request, SUCCESSFUL, readFileData(file));
         } else {
@@ -139,7 +139,7 @@ public class MyHttpServer implements Runnable {
         if (routingResult.equals("")) {
             sendResponse(request, BADREQUEST, readFileData(badRequest));
         } else {
-            request.contentType = "application/json";
+            request.setContentType("application/json");
             sendResponse(request, SUCCESSFUL, routingResult.getBytes(StandardCharsets.UTF_8));
         }
     }
@@ -151,11 +151,11 @@ public class MyHttpServer implements Runnable {
 
     private void sendHeader(Request request, String responseMessage, long filelength) throws IOException {
         PrintWriter out = new PrintWriter(socket.getOutputStream());
-        out.println(request.httpVersion + responseMessage);
+        out.println(request.getHttpVersion() + responseMessage);
         out.println("PRIIT Server 1.0!");
         out.println("Date: " + new Date());
         out.println("Content-length: " + filelength);
-        out.println("Content-Type: " + request.contentType);
+        out.println("Content-Type: " + request.getContentType());
         out.println("");
         out.flush();
     }
@@ -167,14 +167,15 @@ public class MyHttpServer implements Runnable {
     }
 
     private void receiveRequestBody(Request request) {
-        if (request.contentLength > 0) {
+        int contentLength = request.getContentLength();
+        if (contentLength > 0) {
             try {
                 StringBuilder stringBuilder = new StringBuilder();
-                char[] arr = new char[request.contentLength];
+                char[] arr = new char[contentLength];
                 in.read(arr);
-                stringBuilder.append(arr, 0, request.contentLength);
-                request.body = stringBuilder.toString();
-                System.out.println(request.body);
+                stringBuilder.append(arr, 0, contentLength);
+                request.setBody(stringBuilder.toString());
+                System.out.println(request.getBody());
             } catch (NullPointerException | IOException e) {
                 e.printStackTrace();
             }
@@ -183,13 +184,13 @@ public class MyHttpServer implements Runnable {
     }
 
     private void extractJson(Request request) {
-        String json = request.body.replace("{", "");
+        String json = request.getBody().replace("{", "");
         json = json.replace("}", "");
         json = json.replace("\"", "");
         String[] keyValuePairs = json.split(",");
         for (String keyValuePair : keyValuePairs) {
             String[] keyValue = keyValuePair.split(":");
-            request.jsonMap.put(keyValue[0], keyValue[1]);
+            request.getJsonMap().put(keyValue[0], keyValue[1]);
         }
     }
 

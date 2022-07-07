@@ -5,23 +5,21 @@ import java.util.List;
 import java.util.Map;
 
 public class Request {
-    List<String> rawRequest;
-    String type;
-    String path;
-    String httpVersion;
-    String body;
-    String contentType;
-    String authorization;
-    int contentLength;
-    Map<String, String> parameters = new HashMap<>();
-    Map<String, String> jsonMap = new HashMap<>();
+    private final String type;
+    private String path;
+    private final String httpVersion;
+    private String body;
+    private String contentType;
+    private String authorization;
+    private int contentLength;
+    private final Map<String, String> parameters = new HashMap<>();
+    private final Map<String, String> jsonMap = new HashMap<>();
 
     public Request(List<String> rawRequest) {
         String[] splitRequest = rawRequest.get(0).split(" ");
         this.type = splitRequest[0];
         this.path = splitRequest[1].replaceFirst("/", "");
         this.httpVersion = splitRequest[2];
-        this.rawRequest = rawRequest;
         for (String requestLine : rawRequest) {
             if (requestLine.contains("Content-Length: ")) {
                 this.contentLength = Integer.parseInt(requestLine.replaceFirst("Content-Length: ", ""));
@@ -46,12 +44,12 @@ public class Request {
         if (this.path.contains("?")) {
             String[] splitPath = this.path.split("\\?");
             this.path = splitPath[0];
-            getParameters(splitPath[1]);
+            putParametersToMap(splitPath[1]);
         }
     }
 
-    private void getParameters(String allKeysValues) {
-        String[] allKeysValuesArray = allKeysValues.split("&");
+    private void putParametersToMap(String parametersFromPath) {
+        String[] allKeysValuesArray = parametersFromPath.split("&");
         for (String keyValue : allKeysValuesArray) {
             String[] keyValueArray = keyValue.split("=");
             String key = keyValueArray[0];
@@ -64,5 +62,49 @@ public class Request {
         if (this.path.equals("")) {
             this.path = "index.html";
         }
+    }
+
+    public String getType() {
+        return type;
+    }
+
+    public String getPath() {
+        return path;
+    }
+
+    public String getHttpVersion() {
+        return httpVersion;
+    }
+
+    public String getBody() {
+        return body;
+    }
+
+    public String getContentType() {
+        return contentType;
+    }
+
+    public String getAuthorization() {
+        return authorization;
+    }
+
+    public int getContentLength() {
+        return contentLength;
+    }
+
+    public Map<String, String> getParameters() {
+        return parameters;
+    }
+
+    public Map<String, String> getJsonMap() {
+        return jsonMap;
+    }
+
+    public void setBody(String body) {
+        this.body = body;
+    }
+
+    public void setContentType(String contentType) {
+        this.contentType = contentType;
     }
 }
