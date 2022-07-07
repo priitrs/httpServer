@@ -14,6 +14,7 @@ public class MyHttpServer implements Runnable {
     public Socket socket;
     private final BufferedReader in;
     public Router router = new Router();
+    boolean authStatus = false;
     private static final int LOCALPORT = 8080;
     private static final String SUCCESSFUL = " 200 OK";
     private static final String BADREQUEST = " 400 BAD REQUEST";
@@ -50,8 +51,19 @@ public class MyHttpServer implements Runnable {
     public void run() {
         while (true) {
             try {
-                Request httpRequest = new Request(receiveHttpRequest());
-                chooseResponseAction(httpRequest);
+                if (!authStatus) {
+                    Request httpRequest = new Request(receiveHttpRequest());
+                    PrintWriter out = new PrintWriter(socket.getOutputStream());
+                    out.println(httpRequest.httpVersion + " 401" + " Authorization Required");
+                    out.println("Date: " + new Date());
+                    out.println("Content-length: 0");
+                    out.println("WWW-Authenticate: Basic realm=\"protected\"");
+                    out.println("");
+                    out.flush();
+                }
+                Request request = new Request(receiveHttpRequest());
+                authStatus = true;
+                chooseResponseAction(request);
             } catch (IOException e) {
                 e.printStackTrace();
                 break;
@@ -106,7 +118,7 @@ public class MyHttpServer implements Runnable {
     }
 
     private void routingResponse(Request request) throws IOException {
-        String routingResult = router.routingExists(request);
+        String routingResult = router.routingExists(request,socket);
         if (routingResult.equals("")) {
             sendResponse(request, BADREQUEST, readFileData(badRequest));
         } else {

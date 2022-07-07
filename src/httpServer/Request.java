@@ -10,8 +10,9 @@ public class Request {
     String path;
     String httpVersion;
     String body;
-    int contentLength;
     String contentType;
+    String authorization;
+    int contentLength;
     Map<String, String> parameters = new HashMap<>();
     Map<String, String> jsonMap = new HashMap<>();
 
@@ -29,6 +30,11 @@ public class Request {
         for (String requestLine : rawRequest) {
             if (requestLine.contains("Content-Type: ")) {
                 this.contentType = requestLine.replaceFirst("Content-Type: ", "");
+            }
+        }
+        for (String requestLine : rawRequest) {
+            if (requestLine.contains("Authorization: Basic ")) {
+                this.contentType = requestLine.replaceFirst("Authorization: Basic ", "");
             }
         }
 
