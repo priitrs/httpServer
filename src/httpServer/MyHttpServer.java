@@ -18,7 +18,7 @@ public class MyHttpServer implements Runnable {
     private boolean isNotAuthorized = true;
     private static final int LOCALPORT = 8080;
     private static final String SUCCESSFUL = " 200 OK";
-    private static final String BADREQUEST = " 401 NOT AUTHORIZED";
+    private static final String BADREQUEST = " 400 BAD REQUEST";
     private static final String NOT_AUTHORIZED = " 401 NOT AUTHORIZED";
     private static final String NOTFOUND = " 404 FILE NOT FOUND";
     private static final String WEBROOT = "webroot/";
