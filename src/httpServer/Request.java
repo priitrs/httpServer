@@ -34,7 +34,7 @@ public class Request {
         }
         for (String requestLine : rawRequest) {
             if (requestLine.contains("Authorization: Basic ")) {
-                this.contentType = requestLine.replaceFirst("Authorization: Basic ", "");
+                this.authorization = requestLine.replaceFirst("Authorization: Basic ", "");
             }
         }
 

@@ -6,6 +6,7 @@ import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.Date;
 import java.util.List;
 
@@ -14,13 +15,15 @@ public class MyHttpServer implements Runnable {
     public Socket socket;
     private final BufferedReader in;
     public Router router = new Router();
-    boolean authStatus = false;
+    boolean isAuthorized = false;
     private static final int LOCALPORT = 8080;
     private static final String SUCCESSFUL = " 200 OK";
-    private static final String BADREQUEST = " 400 BAD REQUEST";
+    private static final String BADREQUEST = " 401 NOT AUTHORIZED";
+    private static final String INCORRECT_USER_PASS = " 401 NOT AUTHORIZED";
     private static final String NOTFOUND = " 404 FILE NOT FOUND";
     private static final String WEBROOT = "webroot/";
     File badRequest = new File(WEBROOT + "errors/400.html");
+    File incorrectUserPass = new File(WEBROOT + "errors/401.html");
     File fileNotFound = new File(WEBROOT + "errors/404.html");
 
 
@@ -51,7 +54,11 @@ public class MyHttpServer implements Runnable {
     public void run() {
         while (true) {
             try {
-                if (!authStatus) {
+
+                if (isAuthorized) {
+                    Request request = new Request(receiveHttpRequest());
+                    chooseResponseAction(request);
+                } else {
                     Request httpRequest = new Request(receiveHttpRequest());
                     PrintWriter out = new PrintWriter(socket.getOutputStream());
                     out.println(httpRequest.httpVersion + " 401" + " Authorization Required");
@@ -60,10 +67,16 @@ public class MyHttpServer implements Runnable {
                     out.println("WWW-Authenticate: Basic realm=\"protected\"");
                     out.println("");
                     out.flush();
+                    Request request = new Request(receiveHttpRequest());
+                    byte[] decoded = Base64.getDecoder().decode(request.authorization);
+                    String decodedString = new String(decoded);
+                    if (decodedString.equals("test:test")) {
+                        isAuthorized = true;
+                        chooseResponseAction(request);
+                    } else {
+                        sendResponse(request, INCORRECT_USER_PASS, readFileData(incorrectUserPass));
+                    }
                 }
-                Request request = new Request(receiveHttpRequest());
-                authStatus = true;
-                chooseResponseAction(request);
             } catch (IOException e) {
                 e.printStackTrace();
                 break;
@@ -118,7 +131,7 @@ public class MyHttpServer implements Runnable {
     }
 
     private void routingResponse(Request request) throws IOException {
-        String routingResult = router.routingExists(request,socket);
+        String routingResult = router.routingExists(request, socket);
         if (routingResult.equals("")) {
             sendResponse(request, BADREQUEST, readFileData(badRequest));
         } else {
