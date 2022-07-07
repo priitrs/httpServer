@@ -15,7 +15,7 @@ public class MyHttpServer implements Runnable {
     public Socket socket;
     private final BufferedReader in;
     public Router router = new Router();
-    boolean isAuthorized = false;
+    boolean authorized = false;
     private static final int LOCALPORT = 8080;
     private static final String SUCCESSFUL = " 200 OK";
     private static final String BADREQUEST = " 401 NOT AUTHORIZED";
@@ -54,27 +54,17 @@ public class MyHttpServer implements Runnable {
     public void run() {
         while (true) {
             try {
-
-                if (isAuthorized) {
-                    Request request = new Request(receiveHttpRequest());
+                Request request = new Request(receiveHttpRequest());
+                if (authorized) {
                     chooseResponseAction(request);
                 } else {
-                    Request httpRequest = new Request(receiveHttpRequest());
-                    PrintWriter out = new PrintWriter(socket.getOutputStream());
-                    out.println(httpRequest.httpVersion + " 401" + " Authorization Required");
-                    out.println("Date: " + new Date());
-                    out.println("Content-length: 0");
-                    out.println("WWW-Authenticate: Basic realm=\"protected\"");
-                    out.println("");
-                    out.flush();
-                    Request request = new Request(receiveHttpRequest());
-                    byte[] decoded = Base64.getDecoder().decode(request.authorization);
-                    String decodedString = new String(decoded);
-                    if (decodedString.equals("test:test")) {
-                        isAuthorized = true;
-                        chooseResponseAction(request);
+                    sendUnauthorizedHeader(request);
+                    Request authRequest = new Request(receiveHttpRequest());
+                    if (getDecodedAuthorization(authRequest).equals("test:test")) {
+                        authorized = true;
+                        chooseResponseAction(authRequest);
                     } else {
-                        sendResponse(request, INCORRECT_USER_PASS, readFileData(incorrectUserPass));
+                        sendResponse(authRequest, INCORRECT_USER_PASS, readFileData(incorrectUserPass));
                     }
                 }
             } catch (IOException e) {
@@ -100,6 +90,20 @@ public class MyHttpServer implements Runnable {
         }
         System.out.println(rawRequest.get(0));
         return rawRequest;
+    }
+
+    private void sendUnauthorizedHeader(Request unauthorizedRequest) throws IOException {
+        PrintWriter out = new PrintWriter(socket.getOutputStream());
+        out.println(unauthorizedRequest.httpVersion + " 401" + " Authorization Required");
+        out.println("Date: " + new Date());
+        out.println("Content-length: 0");
+        out.println("WWW-Authenticate: Basic realm=\"protected\"");
+        out.println("");
+        out.flush();
+    }
+
+    private String getDecodedAuthorization(Request authorizationRequest) {
+        return new String(Base64.getDecoder().decode(authorizationRequest.authorization));
     }
 
     private void chooseResponseAction(Request request) throws IOException {
