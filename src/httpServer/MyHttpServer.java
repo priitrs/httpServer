@@ -15,15 +15,16 @@ public class MyHttpServer implements Runnable {
     private final Socket socket;
     private final BufferedReader in;
     private final Router router = new Router();
-    private boolean isNotAuthorized = true;
+    private boolean unAuthorized = true;
     private static final int LOCALPORT = 8080;
     private static final String SUCCESSFUL = " 200 OK";
     private static final String BADREQUEST = " 400 BAD REQUEST";
-    private static final String NOT_AUTHORIZED = " 401 NOT AUTHORIZED";
+    private static final String AUTHORIZATION_NEEDED = " 401 AUTHORIZATION NEEDED";
+    private static final String FORBIDDEN = " 403 FORBIDDEN";
     private static final String NOTFOUND = " 404 FILE NOT FOUND";
     private static final String WEBROOT = "webroot/";
     private final File badRequest = new File(WEBROOT + "errors/400.html");
-    private final File incorrectUserPass = new File(WEBROOT + "errors/401.html");
+    private final File incorrectUserPass = new File(WEBROOT + "errors/403.html");
     private final File fileNotFound = new File(WEBROOT + "errors/404.html");
 
 
@@ -55,15 +56,10 @@ public class MyHttpServer implements Runnable {
         while (true) {
             try {
                 Request request = new Request(receiveHttpRequest());
-                if (isNotAuthorized) {
-                    sendHeader(request,NOT_AUTHORIZED,0);
-                    Request authRequest = new Request(receiveHttpRequest());
-                    if (getDecodedAuthorization(authRequest).equals("test:test")) {
-                        isNotAuthorized = false;
-                        request = authRequest;
-                    } else {
-                        sendResponse(authRequest, NOT_AUTHORIZED, readFileData(incorrectUserPass));
-                    }
+                if (unAuthorized) {
+                    sendHeader(request, AUTHORIZATION_NEEDED, 0);
+                    request = new Request(receiveHttpRequest());
+                    validateBasicAuthentication(request);
                 }
                 chooseResponseAction(request);
             } catch (IOException e) {
@@ -72,6 +68,20 @@ public class MyHttpServer implements Runnable {
             }
         }
         System.out.println("Socket " + socket + " disconnected");
+    }
+
+    private void validateBasicAuthentication(Request request) throws FileNotFoundException {
+        BufferedReader userDB = new BufferedReader(new FileReader("passwords.txt"));
+        while (true) {
+            try {
+                if (userDB.readLine().equals(getDecodedAuthorization(request))) {
+                    unAuthorized = false;
+                    break;
+                }
+            } catch (NullPointerException | IOException e) {
+                break;
+            }
+        }
     }
 
     private List<String> receiveHttpRequest() throws IOException {
@@ -96,13 +106,17 @@ public class MyHttpServer implements Runnable {
     }
 
     private void chooseResponseAction(Request request) throws IOException {
-        if (request.getType().equals("POST")) {
-            receiveRequestBody(request);
-        }
-        if (request.getType().equals("GET") || request.getType().equals("POST")) {
-            chooseResponseType(request);
+        if (unAuthorized) {
+            sendHeader(request, FORBIDDEN, 0);
         } else {
-            sendResponse(request, BADREQUEST, readFileData(badRequest));
+            if (request.getType().equals("POST")) {
+                receiveRequestBody(request);
+            }
+            if (request.getType().equals("GET") || request.getType().equals("POST")) {
+                chooseResponseType(request);
+            } else {
+                sendResponse(request, BADREQUEST, readFileData(badRequest));
+            }
         }
     }
 
@@ -144,7 +158,7 @@ public class MyHttpServer implements Runnable {
         out.println("PRIIT Server 1.0!");
         out.println("Date: " + new Date());
         out.println("Content-length: " + filelength);
-        if (responseMessage.equals(NOT_AUTHORIZED)) {
+        if (responseMessage.equals(AUTHORIZATION_NEEDED)) {
             out.println("WWW-Authenticate: Basic realm=\"protected\"");
         } else {
             out.println("Content-Type: " + request.getContentType());
