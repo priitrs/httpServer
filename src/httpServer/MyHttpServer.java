@@ -5,6 +5,7 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Date;
@@ -14,6 +15,7 @@ public class MyHttpServer implements Runnable {
 
     private final Socket socket;
     private final BufferedReader in;
+    private final FileOutputStream log;
     private final Router router = new Router();
     private boolean unAuthorized = true;
     private static final int LOCALPORT = 8080;
@@ -24,13 +26,13 @@ public class MyHttpServer implements Runnable {
     private static final String NOTFOUND = " 404 FILE NOT FOUND";
     private static final String WEBROOT = "webroot/";
     private final File badRequest = new File(WEBROOT + "errors/400.html");
-    private final File incorrectUserPass = new File(WEBROOT + "errors/403.html");
     private final File fileNotFound = new File(WEBROOT + "errors/404.html");
 
 
     public MyHttpServer(Socket socket) throws IOException {
         this.socket = socket;
         this.in = new BufferedReader(new InputStreamReader(this.socket.getInputStream()));
+        this.log = new FileOutputStream("log.txt");
     }
 
     public static void main(String[] args) {
@@ -93,11 +95,14 @@ public class MyHttpServer implements Runnable {
                 if (lastLine.equals("")) {
                     break;
                 }
-            } catch (IOException e) {
+            } catch (NullPointerException | IOException e) {
                 e.printStackTrace();
+                break;
             }
         }
         System.out.println(rawRequest.get(0));
+        String logEntry = LocalDateTime.now() + " socket:" + socket.getPort() + " " + rawRequest.get(0) +"\n";
+        log.write(logEntry.getBytes(StandardCharsets.UTF_8));
         return rawRequest;
     }
 
