@@ -91,6 +91,9 @@ public class MyHttpServer implements Runnable {
         while (true) {
             try {
                 String lastLine = in.readLine();
+                if (lastLine == null) {
+                    break;
+                }
                 rawRequest.add(lastLine);
                 if (lastLine.equals("")) {
                     break;
@@ -101,9 +104,13 @@ public class MyHttpServer implements Runnable {
             }
         }
         System.out.println(rawRequest.get(0));
+        logRequestToFile(rawRequest);
+        return rawRequest;
+    }
+
+    private void logRequestToFile(List<String> rawRequest) throws IOException {
         String logEntry = LocalDateTime.now() + " socket:" + socket.getPort() + " " + rawRequest.get(0) +"\n";
         log.write(logEntry.getBytes(StandardCharsets.UTF_8));
-        return rawRequest;
     }
 
     private String getDecodedAuthorization(Request authorizationRequest) {
