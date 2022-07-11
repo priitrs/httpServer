@@ -55,21 +55,34 @@ public class MyHttpServer implements Runnable {
 
     @Override
     public void run() {
+        logServerAction(" THREAD STARTED \n");
         while (true) {
             try {
-                Request request = new Request(receiveHttpRequest());
-                if (unAuthorized) {
-                    sendHeader(request, AUTHORIZATION_NEEDED, 0);
-                    request = new Request(receiveHttpRequest());
-                    validateBasicAuthentication(request);
+                List<String> rawRequest = receiveHttpRequest();
+                if (rawRequest != null) {
+                    Request request = new Request(rawRequest);
+                    if (unAuthorized) {
+                        sendHeader(request, AUTHORIZATION_NEEDED, 0);
+                        request = new Request(receiveHttpRequest());
+                        validateBasicAuthentication(request);
+                    }
+                    chooseResponseAction(request);
                 }
-                chooseResponseAction(request);
             } catch (IOException e) {
                 e.printStackTrace();
                 break;
             }
         }
-        System.out.println("Socket " + socket + " disconnected");
+        logServerAction(" SOCKET DISCONNECTED \n");
+    }
+
+    private void logServerAction(String message) {
+        String logEntry = LocalDateTime.now() + message;
+        try {
+            log.write(logEntry.getBytes(StandardCharsets.UTF_8));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     private void validateBasicAuthentication(Request request) throws FileNotFoundException {
@@ -103,13 +116,16 @@ public class MyHttpServer implements Runnable {
                 break;
             }
         }
-        System.out.println(rawRequest.get(0));
-        logRequestToFile(rawRequest);
-        return rawRequest;
+        if (!rawRequest.isEmpty()) {
+            System.out.println(rawRequest.get(0));
+            logRequestToFile(rawRequest);
+            return rawRequest;
+        }
+        return null;
     }
 
     private void logRequestToFile(List<String> rawRequest) throws IOException {
-        String logEntry = LocalDateTime.now() + " socket:" + socket.getPort() + " " + rawRequest.get(0) +"\n";
+        String logEntry = LocalDateTime.now() + " socket:" + socket.getPort() + " " + rawRequest.get(0) + "\n";
         log.write(logEntry.getBytes(StandardCharsets.UTF_8));
     }
 
