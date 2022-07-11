@@ -15,7 +15,7 @@ public class MyHttpServer implements Runnable {
 
     private final Socket socket;
     private final BufferedReader in;
-    private final FileOutputStream log;
+    private final FileOutputStream log = new FileOutputStream("log.txt");
     private final Router router = new Router();
     private boolean unAuthorized = true;
     private static final int LOCALPORT = 8080;
@@ -32,7 +32,6 @@ public class MyHttpServer implements Runnable {
     public MyHttpServer(Socket socket) throws IOException {
         this.socket = socket;
         this.in = new BufferedReader(new InputStreamReader(this.socket.getInputStream()));
-        this.log = new FileOutputStream("log.txt");
     }
 
     public static void main(String[] args) {
@@ -55,7 +54,6 @@ public class MyHttpServer implements Runnable {
 
     @Override
     public void run() {
-        logServerAction(" THREAD STARTED \n");
         while (true) {
             try {
                 List<String> rawRequest = receiveHttpRequest();
@@ -73,16 +71,11 @@ public class MyHttpServer implements Runnable {
                 break;
             }
         }
-        logServerAction(" SOCKET DISCONNECTED \n");
     }
 
-    private void logServerAction(String message) {
-        String logEntry = LocalDateTime.now() + message;
-        try {
-            log.write(logEntry.getBytes(StandardCharsets.UTF_8));
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+    private void logRequestToFile(List<String> rawRequest) throws IOException {
+        String logEntry = LocalDateTime.now() + " socket:" + socket.getPort() + " " + rawRequest.get(0) + "\n";
+        log.write(logEntry.getBytes(StandardCharsets.UTF_8));
     }
 
     private void validateBasicAuthentication(Request request) throws FileNotFoundException {
@@ -122,11 +115,6 @@ public class MyHttpServer implements Runnable {
             return rawRequest;
         }
         return null;
-    }
-
-    private void logRequestToFile(List<String> rawRequest) throws IOException {
-        String logEntry = LocalDateTime.now() + " socket:" + socket.getPort() + " " + rawRequest.get(0) + "\n";
-        log.write(logEntry.getBytes(StandardCharsets.UTF_8));
     }
 
     private String getDecodedAuthorization(Request authorizationRequest) {
